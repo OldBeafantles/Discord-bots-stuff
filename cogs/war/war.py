@@ -29,7 +29,7 @@ class War:
     def __init__(self, bot):
         self.bot=bot
         self.persos = fileIO("data/war/Persos.json", "load")
-        self.masterid = "151661401411289088" #<-- Define your ID here
+        self.masterid = fileIO("data/red/settings.json","load")["OWNER"] #<-- Set it manually if you don't have these settings for your bot
         # Persos List
         self.list_persos = self.persos['list_persos']
         self.tournament = fileIO("data/war/tournament.json","load")
