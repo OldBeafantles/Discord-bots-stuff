@@ -1,0 +1,46 @@
+{
+    "Berserker" : 
+    {
+        "HP de base" : 200,
+        "HP par niveau" : 15,
+        "defense de base" : 5,
+        "defense par niveau" : 2,
+        "attaque de base" : 7,
+        "attaque par niveau" : 3,
+        "description" : "The Berserker is a champion nordic warrior, reported to have a nearly uncontrollable power when he feels his life coming to his end."
+    },
+
+    "Warrior":
+    {
+        "HP de base" : 150,
+        "HP par niveau" : 12,
+        "defense de base" : 10,
+        "defense par niveau" : 6,
+        "attaque de base" : 4,
+        "attaque par niveau" : 2,
+        "description" : "The Warrior is always fighting for his honor and for helping people in need."
+    },
+
+    "Assassin":
+    {
+        "HP de base" : 100,
+        "HP par niveau" : 8,
+        "defense de base" : 7,
+        "defense par niveau" : 3,
+        "attaque de base" : 10,
+        "attaque par niveau" : 6,
+        "description" : "The Assassin basically kills people because he likes the taste of the blood and seeing his victims suffering"
+    },
+
+    "Wizard":
+    {
+        "HP de base" : 100,
+        "HP par niveau" : 10,
+        "defense de base" : 8,
+        "defense par niveau" : 4,
+        "attaque de base" : 8,
+        "attaque par niveau" : 4,
+        "description" : "The Wizard fights evil using his magical powers."
+    }
+
+}
