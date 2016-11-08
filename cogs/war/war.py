@@ -285,7 +285,7 @@ class War:
     @commands.command(pass_context=True)
     async def register(self,ctx):
         """Register for Tournament (16 Max)"""
-        if ctx.message.server.id == self.fightserver or ctx.message.channel.id == self.tournamentid:
+        if ctx.message.server.id == self.fightserver or ctx.message.channel.id == self.fightchannel:
             userid = ctx.message.author.id
             if userid  in self.tournament:
                 await self.bot.say("You're already registered! :wink:")
@@ -307,7 +307,7 @@ class War:
     @commands.command(pass_context=True)
     async def deregister(self,ctx):
         """Deregister yourself from Tournament"""
-        if ctx.message.server.id == self.fightserver or ctx.message.channel.id == self.tournamentid:
+        if ctx.message.server.id == self.fightserver or ctx.message.channel.id == self.fightchannel:
             userid = ctx.message.author.id
             if userid in self.tournament:
                 self.tournament.remove(userid)
@@ -333,7 +333,7 @@ class War:
     @commands.command(pass_context=True)
     async def list_participants(self,ctx):
         """List Tournament participants"""
-        if ctx.message.server.id == self.fightserver or ctx.message.channel.id == self.tournamentid:
+        if ctx.message.server.id == self.fightserver or ctx.message.channel.id == self.fightchannel:
             msg_str = "__Registered Tournament Participants__\n\n"
             cc = 1 # counter
             for userid in self.tournament:
