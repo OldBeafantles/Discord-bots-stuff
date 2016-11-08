@@ -352,7 +352,7 @@ class War:
     @commands.command(pass_context=True)
     async def countdown(self,ctx):
         """Tournament countdown"""
-        if ctx.message.server.id == self.fightserver or ctx.message.channel.id == self.tournamentid:
+        if ctx.message.server.id == self.fightserver or ctx.message.channel.id == self.fightchannel:
             dt_current = datetime.datetime.today() - datetime.timedelta(hours=10) # France time to PST
             dt_event = datetime.datetime.strptime(self.schedule,'%d/%m/%Y %H:%M')#convert to datetime
             dt_diff = dt_event - dt_current
@@ -367,7 +367,7 @@ class War:
 
     @commands.command(pass_context=True)
     async def announcement(self,ctx):
-        if ctx.message.server.id == self.fightserver or ctx.message.channel.id == self.tournamentid:
+        if ctx.message.server.id == self.fightserver or ctx.message.channel.id == self.fightchannel:
             """Tournament Announcement"""
             msg_str = "**__Tournament Announced__**\n"
             msg_str+= "Time: "+self.tourduration+"\n"
