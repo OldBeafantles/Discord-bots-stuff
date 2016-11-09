@@ -9,6 +9,8 @@ import math
 import aiohttp
 import json
 from math import *
+from PIL import Image, ImageDraw, ImageFont, ImageColor
+
 
 class Personnage:
     """Classe mère des différents personnages"""
@@ -41,13 +43,82 @@ class Personnage:
         self.force = persos[userid]["force"]
         self.dextérité = persos[userid]["dextérité"]
         self.sagesse = persos[userid]["sagesse"]
+            
+    def virgule(self, nombre):
+        resultat = str(nombre)
+        compteur=0
+        i=0
+        while i != len(resultat):
+            if compteur==3:
+                resultat=resultat[:len(resultat)-i]+","+resultat[len(resultat)-i:]
+                compteur=0
+            else:
+                compteur+=1
+            i+=1
+        return resultat
 
-    def __presentation__(self):
-        msg = "```\n"
-        msg += self.nom + "\t Niveau " + str(self.niveau) + "\nRéputation : " + str(self.reputation) + "\nPrime : " + str(self.prime) + "\nClasse : " + self.classe + "\n"
-        msg += "```"
-        return msg
-
+    async def __presentation__(self, userid, bot):
+        fond = "data/rpg/Parchemin.png"
+        fond_height = 442
+        fond_width = 345
+        result = Image.open(fond).convert('RGBA')
+        process = Image.new('RGBA', (fond_width, fond_height), (0,0,0))
+        for server in bot.servers:
+            for member in server.members:
+                if member.id == userid:
+                    avatar_url = member.avatar_url
+                    break
+        avatar_image = Image
+        cadre_image = Image.open('data/rpg/cadre.png').convert('RGBA')
+        cadre_image = cadre_image.resize(size=(145,145))
+        result.paste(cadre_image,(27,87))
+        try:
+            async with aiohttp.get(avatar_url) as r:
+                image = await r.content.read()
+            with open('data/rpg/temp_avatar','wb') as f:
+                f.write(image)
+                success = True
+        except Exception as e:
+            success = False
+            print(e)
+        if success:
+            if len(avatar_url) == 0:
+                avatar_image = Image.open('data/rpg/avatar.png').convert('RGBA')
+            else:
+                avatar_image = Image.open('data/rpg/temp_avatar').convert('RGBA')
+            avatar_image = avatar_image.resize(size=(120,120))
+            result.paste(avatar_image, (39,100))
+        fnt = ImageFont.truetype('data/rpg/Barthowheel Regular.ttf', 30)
+        fnt2 = ImageFont.truetype('data/rpg/Minimoon.ttf', 23)
+        fnt3 = ImageFont.truetype('data/rpg/Minimoon.ttf', 20)
+        persos = fileIO("data/rpg/Personnages.json", "load")
+        name = persos[userid]["nom"]
+        name_width = fnt.getsize(name)[0]
+        classe = persos[userid]["classe"]
+        HP = self.virgule(str(persos[userid]["HP"]))
+        ATK = self.virgule(str(persos[userid]["attaque"]))
+        niveau = self.virgule(str(persos[userid]["niveau"]))
+        robustesse = self.virgule(str(persos[userid]["robustesse"]))
+        force = self.virgule(str(persos[userid]["force"]))
+        sagesse = self.virgule(str(persos[userid]["sagesse"]))
+        dextérité = self.virgule(str(persos[userid]["dextérité"]))
+        reputation = self.virgule(str(persos[userid]["reputation"]))
+        prime = self.virgule(str(persos[userid]["prime"]))
+        prime_width = fnt3.getsize(prime)[0]
+        d = ImageDraw.Draw(result)
+        d.text((round(fond_width/2) - round(name_width/2), 40),name, font=fnt, fill=(0,0,0,0))
+        d.text((180, 85),classe, font=fnt2, fill=(0,0,0,0))
+        d.text((180, 125),"Niveau " + niveau, font=fnt2, fill=(0,0,0,0))
+        d.text((180, 165),HP + " HP", font=fnt2, fill=(0,255,0,0))
+        d.text((180, 205),ATK + " ATK", font=fnt2, fill=(255,0,0,0))
+        d.text((130, 250),"Robustness : " + robustesse, font=fnt3, fill=(77,0,0,0))
+        d.text((130, 280),"Strenght : " + force, font=fnt3, fill=(255,70,0,0))
+        d.text((130, 310),"Wisdom : " + sagesse, font=fnt3, fill=(136,0,136,0))
+        d.text((130, 340),"Dexterity : " + dextérité, font=fnt3, fill=(0,170,255,0))
+        d.text((30, 370),"Reputation : " + reputation, font=fnt3, fill=(0,0,0,0))
+        d.text((230 - prime_width, 370),"Bounty : " + prime, font=fnt3, fill=(0,0,0,0))
+        d = ImageDraw.Draw(result)
+        result.save('data/rpg/temp.jpg', 'JPEG', quality=100)
 
 class Rpg:
 
@@ -121,7 +192,11 @@ class Rpg:
                                 self.personnages[ctx.message.author.id]["dextérité"] = 0
                                 fileIO("data/rpg/Personnages.json", "save", self.personnages)
                                 a = Personnage(ctx.message.author.id)
-                                await self.bot.say("Your character has been successfully created \o/ :\n\n" + a.__presentation__())
+                                await self.bot.say("Your character has been successfully created \o/ :")
+                                a.__presentation__(ctx.message.author.id, self.bot)
+                                await self.bot.send_file(ctx.message.channel,'data/rpg/temp.jpg')
+                                os.remove('data/rpg/temp.jpg')
+
                             else:
                                 await self.bot.say("<@" + ctx.message.author.id + ">, please type a **correct number**!\nThe creation of your character has been cancelled! :grimacing:")
                         except ValueError:
@@ -135,7 +210,11 @@ class Rpg:
         self.personnages = fileIO("data/rpg/Personnages.json", "load")
         if ctx.message.author.id in self.personnages:
             a = Personnage(ctx.message.author.id)
-            await self.bot.say("Are you sure you want to delete your character?\n\n" + a.__presentation__() + "If you want to delete your account, just type `yes`!")
+            await self.bot.say("Are you sure you want to delete your character?")
+            a.__presentation__(ctx.message.author.id, self.bot)
+            await self.bot.send_file(ctx.message.channel,'data/rpg/temp.jpg')
+            os.remove('data/rpg/temp.jpg')
+            await self.bot.say("If you want to delete your account, just type `yes`!")
             answer = await self.bot.wait_for_message(timeout = 60,author = ctx.message.author, channel = ctx.message.channel)
             if answer == None:
                 await self.bot.say("I don't wanna wait your answer anymore <@" + ctx.message.author.id + ">! :grimacing:")
@@ -155,7 +234,9 @@ class Rpg:
         self.personnages = fileIO("data/rpg/Personnages.json", "load")
         if ctx.message.author.id in self.personnages:
             a = Personnage(ctx.message.author.id)
-            await self.bot.say(a.__presentation__())
+            await a.__presentation__(ctx.message.author.id, self.bot)
+            await self.bot.send_file(ctx.message.channel,'data/rpg/temp.jpg')
+            os.remove('data/rpg/temp.jpg')
         else:
             await self.bot.say("You don't even have a character! :grimacing:")
     
@@ -173,6 +254,43 @@ class Rpg:
                 await self.bot.say("Your character's name has been successfully changed!")
         else:
             await self.bot.say("You don't even have a character! :grimacing:")
+
+    @commands.command(pass_context=True)
+    @checks.is_owner()
+    async def set_char(self,ctx, user : discord.Member, carac : str, *value):
+        """Set a caracteristic to a value for a specified member"""
+        self.personnages = fileIO("data/rpg/Personnages.json", "load")
+        if user.id in self.personnages:
+            if carac in self.personnages[user.id]:
+                value = " ".join(value)
+                if str(type(self.personnages[user.id][carac])) == "<class 'int'>":
+                    try:
+                        value = int(value)
+                        self.personnages[user.id][carac] = value
+                        fileIO("data/rpg/Personnages.json", "save", self.personnages)
+                        await self.bot.say("The caracteristic has been successfully updated!")
+                    except ValueError:
+                        await self.bot.say("The format of the caracteristic isn't correct! :grimacing:")
+                elif str(type(self.personnages[user.id][carac])) == "<class 'list'>":
+                    value = value.split("#")
+                    try:
+                        for entry in value:
+                            entry = int(entry)
+                    except ValueError:
+                        pass
+                    self.personnages[user.id][carac] = value
+                    fileIO("data/rpg/Personnages.json", "save", self.personnages)
+                    await self.bot.say("The caracteristic has been successfully updated!")
+                elif str(type(self.personnages[user.id][carac])) == "<class 'str'>":
+                    self.personnages[user.id][carac] = value
+                    fileIO("data/rpg/Personnages.json", "save", self.personnages)
+                    await self.bot.say("The caracteristic has been successfully updated!")
+                else:
+                    await self.bot.say("The format of the caracteristic isn't correct! :grimacing:")
+            else:
+                await self.bot.say("Please type a correct caracteristic name! :grimacing:")
+        else:
+            await self.bot.say(user.name + " don't even have a character! :grimacing:")
 
 def setup(bot):
     bot.add_cog(Rpg(bot))
