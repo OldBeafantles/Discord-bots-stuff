@@ -70,6 +70,7 @@ class Personnage:
             xpPer = xpfin - xpdeb
             if nbXP < xpfin and nbXP >= xpdeb:
                 return i
+        return 500
 
     def getXP(self, nbXP, userid):
         persos = fileIO("data/rpg/Personnages.json", "load")
@@ -152,10 +153,10 @@ class Personnage:
         d.text((180, 125),"Level " + level, font=fnt2, fill=(0,0,0,0))
         d.text((180, 165),HP + " HP", font=fnt2, fill=(0,255,0,0))
         d.text((180, 205),ATK + " ATK", font=fnt2, fill=(255,0,0,0))
-        d.text((130, 250),"Robustness : " + robustness, font=fnt3, fill=(77,0,0,0))
-        d.text((130, 280),"Strength : " + strength, font=fnt3, fill=(255,70,0,0))
-        d.text((130, 310),"Wisdom : " + wisdom, font=fnt3, fill=(136,0,136,0))
-        d.text((130, 340),"Dexterity : " + dexterity, font=fnt3, fill=(0,170,255,0))
+        d.text((180, 250),"ROB : " + robustness, font=fnt3, fill=(77,0,0,0))
+        d.text((180, 280),"STR : " + strength, font=fnt3, fill=(255,70,0,0))
+        d.text((180, 310),"WIS : " + wisdom, font=fnt3, fill=(136,0,136,0))
+        d.text((180, 340),"DEX : " + dexterity, font=fnt3, fill=(0,170,255,0))
         d.text((30, 370),"Reputation : " + reputation, font=fnt3, fill=(0,0,0,0))
         d.text((230 - bounty_width, 370),"Bounty : " + bounty, font=fnt3, fill=(0,0,0,0))
         d = ImageDraw.Draw(result)
