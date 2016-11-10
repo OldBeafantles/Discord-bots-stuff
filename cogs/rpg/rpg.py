@@ -292,5 +292,52 @@ class Rpg:
         else:
             await self.bot.say(user.name + " don't even have a character! :grimacing:")
 
+    @commands.command(pass_context=True)
+    @checks.is_owner()
+    async def show_char(self,ctx, user : discord.Member, carac : str):
+        """Show a caracteristic of a member's character"""
+        self.personnages = fileIO("data/rpg/Personnages.json", "load")
+        if user.id in self.personnages:
+            if carac in self.personnages[user.id]:
+                await self.bot.say("Here's what you requested : `" + str(self.personnages[user.id][carac]) + "`")
+            else:
+                await self.bot.say("Please type a correct caracteristic name! :grimacing:")
+        else:
+            await self.bot.say(user.name + " don't even have a character! :grimacing:")
+
+    @commands.command()
+    async def infos_class(self, name : str = ""):
+        """Get infos from a specified classe or for all the existing ones"""
+        self.classes =  fileIO("data/rpg/Classes.json", "load")
+        if name != "":
+            name = name[0].upper() + name[1:]
+        if name != "" and name not in self.classes:
+            await self.bot.say("Please type a **correct** class name! :grimacing:")
+        else:
+            msg = "```Markdown\n"
+            if name == "":
+                for classe in self.classes:
+                    msg += "" + classe + "\n============================\n\n<"
+                    msg += "Initial HP = " + str(self.classes[classe]["HP de base"]) + ">\n<"
+                    msg += "HP per_level = " + str(self.classes[classe]["HP par niveau"]) + ">\n<"
+                    msg += "Initial ATK = " + str(self.classes[classe]["attaque de base"]) + ">\n<"
+                    msg += "ATK per_level = " + str(self.classes[classe]["attaque par niveau"]) + ">\n<"
+                    msg += "Initial Defense = " + str(self.classes[classe]["defense de base"]) + ">\n<"
+                    msg += "Defense per_level = " + str(self.classes[classe]["defense par niveau"]) + ">\n\n#"
+                    msg += self.classes[classe]["description"] + "\n\n["
+                    msg += "Particularities](" + self.classes[classe]["particularites"] + ")\n\n\n\n\n"
+            else:
+                msg += "" + name + "\n============================\n\n<"
+                msg += "Initial HP = " + str(self.classes[name]["HP de base"]) + ">\n<"
+                msg += "HP per_level = " + str(self.classes[name]["HP par niveau"]) + ">\n<"
+                msg += "Initial ATK = " + str(self.classes[name]["attaque de base"]) + ">\n<"
+                msg += "ATK per_level = " + str(self.classes[name]["attaque par niveau"]) + ">\n<"
+                msg += "Initial Defense = " + str(self.classes[name]["defense de base"]) + ">\n<"
+                msg += "Defense per_level = " + str(self.classes[name]["defense par niveau"]) + ">\n\n#"
+                msg += self.classes[name]["description"] + "\n\n["
+                msg += "Particularities](" + self.classes[name]["particularites"] + ")\n\n\n\n\n"
+            msg += "```"
+            await self.bot.say(msg)
+
 def setup(bot):
     bot.add_cog(Rpg(bot))
