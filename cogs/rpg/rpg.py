@@ -17,32 +17,33 @@ class Personnage:
     
     def __init__(self, userid):
         persos = fileIO("data/rpg/Personnages.json", "load")
-        self.nom = persos[userid]["nom"]
+        self.name = persos[userid]["name"]
         self.HP = persos[userid]["HP"]
-        self.defense = persos[userid]["defense"]
-        self.attaque = persos[userid]["attaque"]
-        self.casque = persos[userid]["casque"]
-        self.anneau = persos[userid]["anneau"]
-        self.arme = persos[userid]["arme"]
-        self.ceinture = persos[userid]["ceinture"]
-        self.armure = persos[userid]["armure"]
-        self.bottes = persos[userid]["bottes"]
-        self.amulette = persos[userid]["amulette"]
+        self.DEF = persos[userid]["DEF"]
+        self.ATK = persos[userid]["ATK"]
+        self.helmet = persos[userid]["helmet"]
+        self.ring = persos[userid]["ring"]
+        self.weapon = persos[userid]["weapon"]
+        self.belt = persos[userid]["belt"]
+        self.armor = persos[userid]["armor"]
+        self.boots = persos[userid]["boots"]
+        self.amulet = persos[userid]["amulet"]
         self.reputation = persos[userid]["reputation"]
-        self.niveau = persos[userid]["niveau"]
-        self.experience = persos[userid]["experience"]
-        self.combatsGagnés = persos[userid]["combatsGagnés"]
-        self.combatsPerdus = persos[userid]["combatsPerdus"]
-        self.prime = persos[userid]["prime"]
-        self.surnom = persos[userid]["surnom"]
-        self.trophées = persos[userid]["trophées"]
-        self.classe = persos[userid]["classe"]
-        self.etats = persos[userid]["etats"]
-        self.pointsDeCaractéristiques = persos[userid]["pointsDeCaractéristiques"]
-        self.robustesse = persos[userid]["robustesse"]
-        self.force = persos[userid]["force"]
-        self.dextérité = persos[userid]["dextérité"]
-        self.sagesse = persos[userid]["sagesse"]
+        self.level = persos[userid]["level"]
+        self.EXP = persos[userid]["EXP"]
+        self.WonFights = persos[userid]["WonFights"]
+        self.LostFights = persos[userid]["LostFights"]
+        self.bounty = persos[userid]["bounty"]
+        self.nickname = persos[userid]["nickname"]
+        self.trophies = persos[userid]["trophies"]
+        self.classe = persos[userid]["class"]
+        self.states = persos[userid]["states"]
+        self.CaracPoints = persos[userid]["CaracPoints"]
+        self.robustness = persos[userid]["robustness"]
+        self.strength = persos[userid]["strength"]
+        self.dexterity = persos[userid]["dexterity"]
+        self.wisdom = persos[userid]["wisdom"]
+        self.money = persos[userid]["money"]
             
     def virgule(self, nombre):
         resultat = str(nombre)
@@ -57,7 +58,47 @@ class Personnage:
             i+=1
         return resultat
 
-    async def __presentation__(self, userid, bot):
+    def getLevelXP(self,nbXP):
+        if nbXP < 10 and nbXP >= 0:
+            return 1
+        xpdeb = 0
+        xpfin = 10
+        xpPer = 10
+        for i in range(2,500):
+            xpfin += ceil(1.5*xpPer)
+            xpdeb += xpPer
+            xpPer = xpfin - xpdeb
+            if nbXP < xpfin and nbXP >= xpdeb:
+                return i
+
+    def getXP(self, nbXP, userid):
+        persos = fileIO("data/rpg/Personnages.json", "load")
+        persos[userid]["EXP"] += nbXP
+        niv = self.getLevelXP(persos[userid]["EXP"])
+        gainLevel = niv - persos[userid]["level"]
+        msg = "`You won " + str(nbXP) + " EXP!"
+        if niv != persos[userid]["level"]:
+            classes = fileIO("data/rpg/Classes.json", "load")
+            classe = persos[userid]["class"]
+            HP_won = classes[classe]["HP per level"]*gainLevel
+            persos[userid]["HP"] += HP_won
+            ATK_won = classes[classe]["ATK per level"]*gainLevel
+            persos[userid]["ATK"] += ATK_won
+            DEF_won = classes[classe]["DEF per level"]*gainLevel
+            persos[userid]["DEF"] += DEF_won
+            persos[userid]["level"] = niv
+            CaracPoints_won = 5*gainLevel
+            persos[userid]["CaracPoints"] += CaracPoints_won
+            msg += "\nYou're now level " + str(niv) + "!\n"
+            msg += "You won " + str(HP_won) + " HP!\n"
+            msg += "You won " + str(ATK_won) + " ATK!\n"
+            msg += "You won " + str(DEF_won) + " DEF!\n"
+            msg += "You won " + str(CaracPoints_won) + " caracteristic points!\n\n"
+        msg+="`"
+        fileIO("data/rpg/Personnages.json", "save", persos)
+        return msg
+
+    async def presentation(self, userid, bot):
         fond = "data/rpg/Parchemin.png"
         fond_height = 442
         fond_width = 345
@@ -92,31 +133,31 @@ class Personnage:
         fnt2 = ImageFont.truetype('data/rpg/Minimoon.ttf', 23)
         fnt3 = ImageFont.truetype('data/rpg/Minimoon.ttf', 20)
         persos = fileIO("data/rpg/Personnages.json", "load")
-        name = persos[userid]["nom"]
+        name = persos[userid]["name"]
         name_width = fnt.getsize(name)[0]
-        classe = persos[userid]["classe"]
+        classe = persos[userid]["class"]
         HP = self.virgule(str(persos[userid]["HP"]))
-        ATK = self.virgule(str(persos[userid]["attaque"]))
-        niveau = self.virgule(str(persos[userid]["niveau"]))
-        robustesse = self.virgule(str(persos[userid]["robustesse"]))
-        force = self.virgule(str(persos[userid]["force"]))
-        sagesse = self.virgule(str(persos[userid]["sagesse"]))
-        dextérité = self.virgule(str(persos[userid]["dextérité"]))
+        ATK = self.virgule(str(persos[userid]["ATK"]))
+        level = self.virgule(str(persos[userid]["level"]))
+        robustness = self.virgule(str(persos[userid]["robustness"]))
+        strength = self.virgule(str(persos[userid]["strength"]))
+        wisdom = self.virgule(str(persos[userid]["wisdom"]))
+        dexterity = self.virgule(str(persos[userid]["dexterity"]))
         reputation = self.virgule(str(persos[userid]["reputation"]))
-        prime = self.virgule(str(persos[userid]["prime"]))
-        prime_width = fnt3.getsize(prime)[0]
+        bounty = self.virgule(str(persos[userid]["bounty"]))
+        bounty_width = fnt3.getsize(bounty)[0]
         d = ImageDraw.Draw(result)
         d.text((round(fond_width/2) - round(name_width/2), 40),name, font=fnt, fill=(0,0,0,0))
         d.text((180, 85),classe, font=fnt2, fill=(0,0,0,0))
-        d.text((180, 125),"Niveau " + niveau, font=fnt2, fill=(0,0,0,0))
+        d.text((180, 125),"Level " + level, font=fnt2, fill=(0,0,0,0))
         d.text((180, 165),HP + " HP", font=fnt2, fill=(0,255,0,0))
         d.text((180, 205),ATK + " ATK", font=fnt2, fill=(255,0,0,0))
-        d.text((130, 250),"Robustness : " + robustesse, font=fnt3, fill=(77,0,0,0))
-        d.text((130, 280),"Strenght : " + force, font=fnt3, fill=(255,70,0,0))
-        d.text((130, 310),"Wisdom : " + sagesse, font=fnt3, fill=(136,0,136,0))
-        d.text((130, 340),"Dexterity : " + dextérité, font=fnt3, fill=(0,170,255,0))
+        d.text((130, 250),"Robustness : " + robustness, font=fnt3, fill=(77,0,0,0))
+        d.text((130, 280),"Strength : " + strength, font=fnt3, fill=(255,70,0,0))
+        d.text((130, 310),"Wisdom : " + wisdom, font=fnt3, fill=(136,0,136,0))
+        d.text((130, 340),"Dexterity : " + dexterity, font=fnt3, fill=(0,170,255,0))
         d.text((30, 370),"Reputation : " + reputation, font=fnt3, fill=(0,0,0,0))
-        d.text((230 - prime_width, 370),"Bounty : " + prime, font=fnt3, fill=(0,0,0,0))
+        d.text((230 - bounty_width, 370),"Bounty : " + bounty, font=fnt3, fill=(0,0,0,0))
         d = ImageDraw.Draw(result)
         result.save('data/rpg/temp.jpg', 'JPEG', quality=100)
 
@@ -128,6 +169,57 @@ class Rpg:
         self.personnages = fileIO("data/rpg/Personnages.json", "load")
         self.classes =  fileIO("data/rpg/Classes.json", "load")
         self.version = "1.0.0"
+
+    @commands.command(pass_context=True)
+    @checks.is_owner()
+    async def test(self,ctx, nb : int = 1):
+        self.personnages = fileIO("data/rpg/Personnages.json", "load")
+        a = Personnage(ctx.message.author.id)
+        await self.bot.say(a.getXP(nb,ctx.message.author.id))
+
+    @commands.command(pass_context=True)
+    async def attrib(self,ctx):
+        """To set your caracteristic points"""
+        self.personnages = fileIO("data/rpg/Personnages.json", "load")
+        if ctx.message.author.id in self.personnages:
+            if self.personnages[ctx.message.author.id]["CaracPoints"] != 0:
+                msg = "```Markdown\n"
+                msg += "You've got " + str(self.personnages[ctx.message.author.id]["CaracPoints"]) + " caracteristic points\n==================================================\n\n"
+                msg += "<Robustness = " + str(self.personnages[ctx.message.author.id]["robustness"]) + ">\n"
+                msg += "<Strength = " + str(self.personnages[ctx.message.author.id]["strength"]) + ">\n"
+                msg += "<Wisdom = " + str(self.personnages[ctx.message.author.id]["wisdom"]) + ">\n"
+                msg += "<Deterity = " + str(self.personnages[ctx.message.author.id]["dexterity"]) + ">\n\n"
+                msg += "#To attrib a x amount of points to a caracteristic, type 'caracteristic_name amount_value'\n\n"
+                msg += "#Example : strength 3\n"
+                msg += "```"
+                await self.bot.say(msg)
+                answer = await self.bot.wait_for_message(timeout=60, author=ctx.message.author, channel=ctx.message.channel)
+                if answer != None:
+                    a = answer.content.split(" ")
+                    if len(a) == 2:
+                        try:
+                            value = int(a[1])
+                            carac = a[0][0].upper() + a[0][1:]
+                            if carac == "Strength" or carac == "Wisdom" or carac == "Dexterity" or carac == "Robustness":
+                                if value <= self.personnages[ctx.message.author.id]["CaracPoints"]:
+                                    self.personnages[ctx.message.author.id][carac[0].lower() + carac[1:]] += value
+                                    self.personnages[ctx.message.author.id]["CaracPoints"] -= value
+                                    fileIO("data/rpg/Personnages.json", "save", self.personnages)
+                                    await self.bot.say("Done.")
+                                else:
+                                    await self.bot.say("You don't have that amount of caracteristic points! :grimacing:\nI cancel the caracteristic points attribution process!")
+                            else:
+                                await self.bot.say("Please type a correct caracteristic name! :grimacing:\nI cancel the caracteristic points attribution process!")
+                        except ValueError:
+                            await self.bot.say("You must type a number in second position! :grimacing:\nI cancel the caracteristic points attribution process!")
+                    else:
+                        await self.bot.say("The format isn't correct! :grimacing:\nI cancel the caracteristic points attribution process!")
+                else:
+                    await self.bot.say("<@" + ctx.message.author.id + ">, I don't want to wait anymore, I cancel the caracteristic points attribution process!")
+            else:
+                await self.bot.say("You don't have any caracteristic points! :grimacing:")
+        else:
+            await self.bot.say("You don't even have a character! :grimacing:")
 
     @commands.command(pass_context=True)
     async def create_mychar(self,ctx):
@@ -164,36 +256,37 @@ class Rpg:
                                         break
                                     i += 1
                                 self.personnages[ctx.message.author.id] = {}
-                                self.personnages[ctx.message.author.id]["nom"] = name.content
-                                self.personnages[ctx.message.author.id]["HP"] = self.classes[name_class]["HP de base"]
-                                self.personnages[ctx.message.author.id]["defense"] = self.classes[name_class]["defense de base"]
-                                self.personnages[ctx.message.author.id]["attaque"] = self.classes[name_class]["attaque de base"]
-                                self.personnages[ctx.message.author.id]["casque"] = None
-                                self.personnages[ctx.message.author.id]["anneau"] = None
-                                self.personnages[ctx.message.author.id]["arme"] = None
-                                self.personnages[ctx.message.author.id]["ceinture"] = None
-                                self.personnages[ctx.message.author.id]["armure"] = None
-                                self.personnages[ctx.message.author.id]["bottes"] = None
-                                self.personnages[ctx.message.author.id]["amulette"] = None
+                                self.personnages[ctx.message.author.id]["name"] = name.content
+                                self.personnages[ctx.message.author.id]["HP"] = self.classes[name_class]["Base HP"]
+                                self.personnages[ctx.message.author.id]["DEF"] = self.classes[name_class]["Base DEF"]
+                                self.personnages[ctx.message.author.id]["ATK"] = self.classes[name_class]["Base ATK"]
+                                self.personnages[ctx.message.author.id]["helmet"] = None
+                                self.personnages[ctx.message.author.id]["ring"] = None
+                                self.personnages[ctx.message.author.id]["weapon"] = None
+                                self.personnages[ctx.message.author.id]["belt"] = None
+                                self.personnages[ctx.message.author.id]["armor"] = None
+                                self.personnages[ctx.message.author.id]["boots"] = None
+                                self.personnages[ctx.message.author.id]["amulet"] = None
                                 self.personnages[ctx.message.author.id]["reputation"] = 0
-                                self.personnages[ctx.message.author.id]["niveau"] = 1
-                                self.personnages[ctx.message.author.id]["experience"] = 0
-                                self.personnages[ctx.message.author.id]["combatsGagnés"] = 0
-                                self.personnages[ctx.message.author.id]["combatsPerdus"] = 0
-                                self.personnages[ctx.message.author.id]["prime"] = 0
-                                self.personnages[ctx.message.author.id]["surnom"] = ""
-                                self.personnages[ctx.message.author.id]["trophées"] = []
-                                self.personnages[ctx.message.author.id]["classe"] = name_class
-                                self.personnages[ctx.message.author.id]["etats"] = []
-                                self.personnages[ctx.message.author.id]["pointsDeCaractéristiques"] = 0
-                                self.personnages[ctx.message.author.id]["force"] = 0
-                                self.personnages[ctx.message.author.id]["sagesse"] = 0
-                                self.personnages[ctx.message.author.id]["robustesse"] = 0
-                                self.personnages[ctx.message.author.id]["dextérité"] = 0
+                                self.personnages[ctx.message.author.id]["level"] = 1
+                                self.personnages[ctx.message.author.id]["EXP"] = 0
+                                self.personnages[ctx.message.author.id]["WonFights"] = 0
+                                self.personnages[ctx.message.author.id]["LostFights"] = 0
+                                self.personnages[ctx.message.author.id]["bounty"] = 0
+                                self.personnages[ctx.message.author.id]["nickname"] = ""
+                                self.personnages[ctx.message.author.id]["trophies"] = []
+                                self.personnages[ctx.message.author.id]["class"] = name_class
+                                self.personnages[ctx.message.author.id]["states"] = []
+                                self.personnages[ctx.message.author.id]["CaracPoints"] = 0
+                                self.personnages[ctx.message.author.id]["strength"] = 0
+                                self.personnages[ctx.message.author.id]["wisdom"] = 0
+                                self.personnages[ctx.message.author.id]["robustness"] = 0
+                                self.personnages[ctx.message.author.id]["dexterity"] = 0
+                                self.personnages[ctx.message.author.id]["money"] = 0
                                 fileIO("data/rpg/Personnages.json", "save", self.personnages)
-                                a = Personnage(ctx.message.author.id)
                                 await self.bot.say("Your character has been successfully created \o/ :")
-                                a.__presentation__(ctx.message.author.id, self.bot)
+                                a = Personnage(ctx.message.author.id)
+                                await a.presentation(ctx.message.author.id, self.bot)
                                 await self.bot.send_file(ctx.message.channel,'data/rpg/temp.jpg')
                                 os.remove('data/rpg/temp.jpg')
 
@@ -209,9 +302,9 @@ class Rpg:
         """Delete your character :'("""
         self.personnages = fileIO("data/rpg/Personnages.json", "load")
         if ctx.message.author.id in self.personnages:
-            a = Personnage(ctx.message.author.id)
             await self.bot.say("Are you sure you want to delete your character?")
-            a.__presentation__(ctx.message.author.id, self.bot)
+            a = Personnage(ctx.message.author.id)
+            await a.presentation(ctx.message.author.id, self.bot)
             await self.bot.send_file(ctx.message.channel,'data/rpg/temp.jpg')
             os.remove('data/rpg/temp.jpg')
             await self.bot.say("If you want to delete your account, just type `yes`!")
@@ -234,7 +327,7 @@ class Rpg:
         self.personnages = fileIO("data/rpg/Personnages.json", "load")
         if ctx.message.author.id in self.personnages:
             a = Personnage(ctx.message.author.id)
-            await a.__presentation__(ctx.message.author.id, self.bot)
+            await a.presentation(ctx.message.author.id, self.bot)
             await self.bot.send_file(ctx.message.channel,'data/rpg/temp.jpg')
             os.remove('data/rpg/temp.jpg')
         else:
@@ -249,7 +342,7 @@ class Rpg:
             if len(name) > 19:
                 await self.bot.say("<@" + ctx.message.author.id + ">, please take a name with less than 20 characters! :grimacing:")
             else:
-                self.personnages[ctx.message.author.id]["nom"] = name
+                self.personnages[ctx.message.author.id]["name"] = name
                 fileIO("data/rpg/Personnages.json", "save", self.personnages)
                 await self.bot.say("Your character's name has been successfully changed!")
         else:
@@ -318,22 +411,22 @@ class Rpg:
             if name == "":
                 for classe in self.classes:
                     msg += "" + classe + "\n============================\n\n<"
-                    msg += "Initial HP = " + str(self.classes[classe]["HP de base"]) + ">\n<"
-                    msg += "HP per_level = " + str(self.classes[classe]["HP par niveau"]) + ">\n<"
-                    msg += "Initial ATK = " + str(self.classes[classe]["attaque de base"]) + ">\n<"
-                    msg += "ATK per_level = " + str(self.classes[classe]["attaque par niveau"]) + ">\n<"
-                    msg += "Initial Defense = " + str(self.classes[classe]["defense de base"]) + ">\n<"
-                    msg += "Defense per_level = " + str(self.classes[classe]["defense par niveau"]) + ">\n\n#"
+                    msg += "Initial HP = " + str(self.classes[classe]["Base HP"]) + ">\n<"
+                    msg += "HP per level = " + str(self.classes[classe]["HP per level"]) + ">\n<"
+                    msg += "Initial ATK = " + str(self.classes[classe]["Base ATK"]) + ">\n<"
+                    msg += "ATK per level = " + str(self.classes[classe]["ATK per level"]) + ">\n<"
+                    msg += "Initial Defense = " + str(self.classes[classe]["Base DEF"]) + ">\n<"
+                    msg += "Defense per level = " + str(self.classes[classe]["DEF per level"]) + ">\n\n#"
                     msg += self.classes[classe]["description"] + "\n\n["
                     msg += "Particularities](" + self.classes[classe]["particularites"] + ")\n\n\n\n\n"
             else:
                 msg += "" + name + "\n============================\n\n<"
-                msg += "Initial HP = " + str(self.classes[name]["HP de base"]) + ">\n<"
-                msg += "HP per_level = " + str(self.classes[name]["HP par niveau"]) + ">\n<"
-                msg += "Initial ATK = " + str(self.classes[name]["attaque de base"]) + ">\n<"
-                msg += "ATK per_level = " + str(self.classes[name]["attaque par niveau"]) + ">\n<"
-                msg += "Initial Defense = " + str(self.classes[name]["defense de base"]) + ">\n<"
-                msg += "Defense per_level = " + str(self.classes[name]["defense par niveau"]) + ">\n\n#"
+                msg += "Initial HP = " + str(self.classes[name]["Base HP"]) + ">\n<"
+                msg += "HP per level = " + str(self.classes[name]["HP per level"]) + ">\n<"
+                msg += "Initial ATK = " + str(self.classes[name]["Base ATK"]) + ">\n<"
+                msg += "ATK per level = " + str(self.classes[name]["ATK per level"]) + ">\n<"
+                msg += "Initial Defense = " + str(self.classes[name]["Base DEF"]) + ">\n<"
+                msg += "Defense per level = " + str(self.classes[name]["DEF per level"]) + ">\n\n#"
                 msg += self.classes[name]["description"] + "\n\n["
                 msg += "Particularities](" + self.classes[name]["particularites"] + ")\n\n\n\n\n"
             msg += "```"
