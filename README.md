@@ -5,4 +5,4 @@ Sorry about the lack of commentaries in the codes (I find it very annoying but I
 I code when I have time and motivation, so I don't know when will I upload new stuff.
 
 
-I managed to do create these things thanks to RedBot's community and Pantoufle, a big up to them (There are also some parts that I took from Pantoulfle's work ^^) 
+I managed to do create these things thanks to RedBot's community and Pantoufle, a big up to them (There are also some parts that I took from Pantoulfle's work for the war cog tournament system ^^) 
