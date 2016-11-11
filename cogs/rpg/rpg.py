@@ -51,7 +51,7 @@ class Personnage:
         self.skill = persos[userid]["skill"]
         self.guild = persos[userid]["guild"]
         self.avatar = persos[userid]["avatar"]
-        self.iventory = persos[userid]["inventory"]
+        self.inventory = persos[userid]["inventory"]
             
     def virgule(self, nombre):
         resultat = str(nombre)
@@ -105,6 +105,49 @@ class Personnage:
             msg += "You won " + str(CaracPoints_won) + " caracteristic points!\n\n"
         msg+="`"
         fileIO("data/rpg/Personnages.json", "save", persos)
+        return msg
+
+    def remove_item(self, userid, item, nb):
+        persos = fileIO("data/rpg/Personnages.json", "load")
+        res = -1
+        for i in range (0,len(persos[userid]["inventory"])):
+            if persos[userid]["inventory"][i][0] == item:
+                res = i
+                break
+        if res != -1:
+            if nb != - 1 and nb <= 0:
+                msg = "Please type a **correct number**! :grimacing:"
+            elif nb == - 1:
+                del persos[userid]["inventory"][res]
+                fileIO("data/rpg/Personnages.json", "save", persos)
+                msg = "Done!"
+            else:
+                persos[user.id]["inventory"][res][1] -= nb
+                if persos[userid]["inventory"][res][1] <= 0:
+                    del persos[userid]["inventory"][res]
+                fileIO("data/rpg/Personnages.json", "save", persos)
+                msg = "Done!"
+        else:
+            msg = "<@" + userid + "> don't even have this item! :grimacing:"
+        return msg
+
+    def give_item(self,userid, item, nb):
+        if nb > 0:
+            persos = fileIO("data/rpg/Personnages.json", "load")
+            res = -1
+            for i in range (0,len(persos[userid]["inventory"])):
+                if persos[userid]["inventory"][i][0] == item:
+                    res = i
+                    break
+            if res == -1:
+                persos[userid]["inventory"].append([item,nb])
+                fileIO("data/rpg/Personnages.json", "save", persos)
+            else:
+                persos[userid]["inventory"][res][1] +=nb
+                fileIO("data/rpg/Personnages.json", "save", persos)
+            msg = "Done!"
+        else:
+            msg = "Please type a **correct number**! :grimacing:"
         return msg
 
     async def presentation(self, userid, bot):
@@ -165,6 +208,9 @@ class Personnage:
         d = ImageDraw.Draw(result)
         result.save('data/rpg/temp.jpg', 'JPEG', quality=100)
 
+
+
+
 class Rpg:
 
     def __init__(self, bot):
@@ -173,13 +219,6 @@ class Rpg:
         self.personnages = fileIO("data/rpg/Personnages.json", "load")
         self.classes =  fileIO("data/rpg/Classes.json", "load")
         self.version = "1.0.0"
-
-    def wheresItem(self,userid,name):
-        persos = fileIO("data/rpg/Personnages.json", "load")
-        for i in range (0,len(persos[userid]["inventory"])):
-            if persos[userid]["inventory"][i][0] == name:
-                return i
-        return -1
 
     @commands.command(pass_context=True)
     async def attrib(self,ctx):
@@ -399,12 +438,8 @@ class Rpg:
         """Give an amount of an item to a member"""
         self.personnages = fileIO("data/rpg/Personnages.json", "load")
         if user.id in self.personnages:
-            if nb > 0:
-                self.personnages[user.id]["inventory"].append([item,nb])
-                fileIO("data/rpg/Personnages.json", "save", self.personnages)
-                await self.bot.say('Done!')
-            else:
-                await self.bot.say("Please type a **correct number**! :grimacing:")
+            a = Personnage(user.id)
+            await self.bot.say(a.give_item(user.id,item,nb))
         else:
             await self.bot.say(user.name + " don't even have a character! :grimacing:")
 
@@ -414,22 +449,8 @@ class Rpg:
         """To remove an amount of an item to a member"""
         self.personnages = fileIO("data/rpg/Personnages.json", "load")
         if user.id in self.personnages:
-            temp = self.wheresItem(user.id,item)
-            if temp != -1:
-                if nb != - 1 and nb <= 0:
-                    await self.bot.say("Please type a **correct number**! :grimacing:")
-                elif nb == - 1:
-                    del self.personnages[user.id]["inventory"][temp]
-                    fileIO("data/rpg/Personnages.json", "save", self.personnages)
-                    await self.bot.say("Done!")
-                else:
-                    self.personnages[user.id]["inventory"][temp][1] -= nb
-                    if self.personnages[user.id]["inventory"][temp][1] <= 0:
-                        del self.personnages[user.id]["inventory"][temp]
-                    fileIO("data/rpg/Personnages.json", "save", self.personnages)
-                    await self.bot.say("Done!")
-            else:
-                await self.bot.say(user.name + " don't even have this item! :grimacing:")
+            a = Personnage(user.id)
+            await self.bot.say(a.remove_item(user.id,item,nb))
         else:
             await self.bot.say(user.name + " don't even have a character! :grimacing:")
 
