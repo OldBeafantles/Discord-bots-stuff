@@ -51,6 +51,7 @@ class Personnage:
         self.skill = persos[userid]["skill"]
         self.guild = persos[userid]["guild"]
         self.avatar = persos[userid]["avatar"]
+        self.iventory = persos[userid]["inventory"]
             
     def virgule(self, nombre):
         resultat = str(nombre)
@@ -173,12 +174,12 @@ class Rpg:
         self.classes =  fileIO("data/rpg/Classes.json", "load")
         self.version = "1.0.0"
 
-    @commands.command(pass_context=True)
-    @checks.is_owner()
-    async def test(self,ctx, nb : int = 1):
-        self.personnages = fileIO("data/rpg/Personnages.json", "load")
-        a = Personnage(ctx.message.author.id)
-        await self.bot.say(a.getXP(nb,ctx.message.author.id))
+    def wheresItem(self,userid,name):
+        persos = fileIO("data/rpg/Personnages.json", "load")
+        for i in range (0,len(persos[userid]["inventory"])):
+            if persos[userid]["inventory"][i][0] == name:
+                return i
+        return -1
 
     @commands.command(pass_context=True)
     async def attrib(self,ctx):
@@ -288,6 +289,7 @@ class Rpg:
                                 self.personnages[ctx.message.author.id]["money"] = 0
                                 self.personnages[ctx.message.author.id]["skill"] = 100
                                 self.personnages[ctx.message.author.id]["guild"] = None
+                                self.personnages[ctx.message.author.id]["inventory"] = []
                                 if len(ctx.message.author.avatar_url) != 0:
                                     self.personnages[ctx.message.author.id]["avatar"] = ctx.message.author.avatar_url
                                 else:
@@ -360,15 +362,76 @@ class Rpg:
     @commands.command(pass_context=True)
     async def avatar_mychar(self,ctx, link : str):
         """Set an avatar for your character"""
-        try:
-            r = requests.get(link)
-            img = Image.open(BytesIO(r.content))
-            self.personnages = fileIO("data/rpg/Personnages.json", "load")
-            self.personnages[ctx.message.author.id]["avatar"] = link
-            fileIO("data/rpg/Personnages.json", "save", self.personnages)
-            await self.bot.say("Your avatar has been successfully updated! :wink:")
-        except Exception as e:
-            await self.bot.say("There's an error : `" + str(e) + "`")
+        if ctx.message.author.id in self.personnages:
+            try:
+                r = requests.get(link)
+                img = Image.open(BytesIO(r.content))
+                self.personnages = fileIO("data/rpg/Personnages.json", "load")
+                self.personnages[ctx.message.author.id]["avatar"] = link
+                fileIO("data/rpg/Personnages.json", "save", self.personnages)
+                await self.bot.say("Your avatar has been successfully updated! :wink:")
+            except Exception as e:
+                await self.bot.say("There's an error : `" + str(e) + "`")
+        else:
+            await self.bot.say("You don't even have a character! :grimacing:")
+
+    @commands.command(pass_context=True)
+    async def inventory(self,ctx):
+        """Show your inventory throuhgh a private message"""
+        self.personnages = fileIO("data/rpg/Personnages.json", "load")
+        if ctx.message.author.id in self.personnages:
+            msg = "```Markdown\n"
+            msg += "Here's your stuff:\n====================\n\n"
+            if len(self.personnages[ctx.message.author.id]["inventory"]) != 0:
+                for item in self.personnages[ctx.message.author.id]["inventory"]:
+                    msg += "[" + item[0] + "](x" + str(item[1]) + ")\n"
+            else:
+                msg += "No item :'(\n"
+            msg += "\n\n#Money " + str(self.personnages[ctx.message.author.id]["money"]) + " ☼\n"
+            msg += "```"
+            await self.bot.send_message(ctx.message.author, msg)
+        else:
+            await self.bot.say("You don't even have a character! :grimacing:")
+
+    @commands.command(pass_context=True)
+    @checks.is_owner()
+    async def give_item(self,ctx, user : discord.Member, item : str, nb : int):
+        """Give an amount of an item to a member"""
+        self.personnages = fileIO("data/rpg/Personnages.json", "load")
+        if user.id in self.personnages:
+            if nb > 0:
+                self.personnages[user.id]["inventory"].append([item,nb])
+                fileIO("data/rpg/Personnages.json", "save", self.personnages)
+                await self.bot.say('Done!')
+            else:
+                await self.bot.say("Please type a **correct number**! :grimacing:")
+        else:
+            await self.bot.say(user.name + " don't even have a character! :grimacing:")
+
+    @commands.command(pass_context=True)
+    @checks.is_owner()
+    async def remove_item (self,ctx, user : discord.Member, item : str, nb : int = -1):
+        """To remove an amount of an item to a member"""
+        self.personnages = fileIO("data/rpg/Personnages.json", "load")
+        if user.id in self.personnages:
+            temp = self.wheresItem(user.id,item)
+            if temp != -1:
+                if nb != - 1 and nb <= 0:
+                    await self.bot.say("Please type a **correct number**! :grimacing:")
+                elif nb == - 1:
+                    del self.personnages[user.id]["inventory"][temp]
+                    fileIO("data/rpg/Personnages.json", "save", self.personnages)
+                    await self.bot.say("Done!")
+                else:
+                    self.personnages[user.id]["inventory"][temp][1] -= nb
+                    if self.personnages[user.id]["inventory"][temp][1] <= 0:
+                        del self.personnages[user.id]["inventory"][temp]
+                    fileIO("data/rpg/Personnages.json", "save", self.personnages)
+                    await self.bot.say("Done!")
+            else:
+                await self.bot.say(user.name + " don't even have this item! :grimacing:")
+        else:
+            await self.bot.say(user.name + " don't even have a character! :grimacing:")
 
     @commands.command(pass_context=True)
     @checks.is_owner()
@@ -432,7 +495,7 @@ class Rpg:
             msg = "```Markdown\n"
             if name == "":
                 for classe in self.classes:
-                    msg += "" + classe + "\n============================\n\n<"
+                    msg += "" + classe + "\n===========================\n\n<"
                     msg += "Initial HP = " + str(self.classes[classe]["Base HP"]) + ">\n<"
                     msg += "HP per level = " + str(self.classes[classe]["HP per level"]) + ">\n<"
                     msg += "Initial ATK = " + str(self.classes[classe]["Base ATK"]) + ">\n<"
@@ -442,7 +505,7 @@ class Rpg:
                     msg += self.classes[classe]["description"] + "\n\n["
                     msg += "Particularities](" + self.classes[classe]["particularites"] + ")\n\n\n\n\n"
             else:
-                msg += "" + name + "\n============================\n\n<"
+                msg += "" + name + "\n===========================\n\n<"
                 msg += "Initial HP = " + str(self.classes[name]["Base HP"]) + ">\n<"
                 msg += "HP per level = " + str(self.classes[name]["HP per level"]) + ">\n<"
                 msg += "Initial ATK = " + str(self.classes[name]["Base ATK"]) + ">\n<"
