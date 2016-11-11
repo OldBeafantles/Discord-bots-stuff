@@ -6,10 +6,14 @@ import asyncio
 import textwrap
 import os
 import math
-import aiohttp
 import json
 from math import *
 from PIL import Image, ImageDraw, ImageFont, ImageColor
+from io import BytesIO
+import requests
+
+
+
 
 
 class Personnage:
@@ -44,6 +48,9 @@ class Personnage:
         self.dexterity = persos[userid]["dexterity"]
         self.wisdom = persos[userid]["wisdom"]
         self.money = persos[userid]["money"]
+        self.skill = persos[userid]["skill"]
+        self.guild = persos[userid]["guild"]
+        self.avatar = persos[userid]["avatar"]
             
     def virgule(self, nombre):
         resultat = str(nombre)
@@ -114,22 +121,17 @@ class Personnage:
         cadre_image = Image.open('data/rpg/cadre.png').convert('RGBA')
         cadre_image = cadre_image.resize(size=(145,145))
         result.paste(cadre_image,(27,87))
-        try:
-            async with aiohttp.get(avatar_url) as r:
-                image = await r.content.read()
-            with open('data/rpg/temp_avatar','wb') as f:
-                f.write(image)
-                success = True
-        except Exception as e:
-            success = False
-            print(e)
-        if success:
-            if len(avatar_url) == 0:
-                avatar_image = Image.open('data/rpg/avatar.png').convert('RGBA')
-            else:
-                avatar_image = Image.open('data/rpg/temp_avatar').convert('RGBA')
-            avatar_image = avatar_image.resize(size=(120,120))
-            result.paste(avatar_image, (39,100))
+        avatar = fileIO("data/rpg/Personnages.json", "load")[userid]["avatar"]
+        if avatar != "None":
+            try:
+                r = requests.get(avatar)
+                avatar_image = Image.open(BytesIO(r.content))
+            except Exception as e:
+                await self.bot.say("There's an error : `" + str(e) + "`")
+        else:
+            avatar_image = Image.open('data/rpg/avatar.png').convert('RGBA')
+        avatar_image = avatar_image.resize(size=(120,120))
+        result.paste(avatar_image, (39,100))
         fnt = ImageFont.truetype('data/rpg/Barthowheel Regular.ttf', 30)
         fnt2 = ImageFont.truetype('data/rpg/Minimoon.ttf', 23)
         fnt3 = ImageFont.truetype('data/rpg/Minimoon.ttf', 20)
@@ -284,6 +286,12 @@ class Rpg:
                                 self.personnages[ctx.message.author.id]["robustness"] = 0
                                 self.personnages[ctx.message.author.id]["dexterity"] = 0
                                 self.personnages[ctx.message.author.id]["money"] = 0
+                                self.personnages[ctx.message.author.id]["skill"] = 100
+                                self.personnages[ctx.message.author.id]["guild"] = None
+                                if len(ctx.message.author.avatar_url) != 0:
+                                    self.personnages[ctx.message.author.id]["avatar"] = ctx.message.author.avatar_url
+                                else:
+                                    self.personnages[ctx.message.author.id]["avatar"] = "None"
                                 fileIO("data/rpg/Personnages.json", "save", self.personnages)
                                 await self.bot.say("Your character has been successfully created \o/ :")
                                 a = Personnage(ctx.message.author.id)
@@ -348,6 +356,19 @@ class Rpg:
                 await self.bot.say("Your character's name has been successfully changed!")
         else:
             await self.bot.say("You don't even have a character! :grimacing:")
+
+    @commands.command(pass_context=True)
+    async def avatar_mychar(self,ctx, link : str):
+        """Set an avatar for your character"""
+        try:
+            r = requests.get(link)
+            img = Image.open(BytesIO(r.content))
+            self.personnages = fileIO("data/rpg/Personnages.json", "load")
+            self.personnages[ctx.message.author.id]["avatar"] = link
+            fileIO("data/rpg/Personnages.json", "save", self.personnages)
+            await self.bot.say("Your avatar has been successfully updated! :wink:")
+        except Exception as e:
+            await self.bot.say("There's an error : `" + str(e) + "`")
 
     @commands.command(pass_context=True)
     @checks.is_owner()
