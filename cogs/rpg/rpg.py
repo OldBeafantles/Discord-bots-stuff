@@ -12,9 +12,17 @@ from PIL import Image, ImageDraw, ImageFont, ImageColor
 from io import BytesIO
 import requests
 
+class Equipement:
 
-
-
+    def __init__(self, equipID):
+        objets = fileIO("data/rpg/Objets.json", "load")
+        self.name = objets[equipID]["name"]
+        self.bonus = objets[equipID]["bonus"]
+        self.picture = objets[equipID]["picture"]
+        self.price = objets[equipID]["price"]
+        self.type = objets[equipID]["type"]
+        self.level = objets[equipID]["level"]
+        self.id = equipID
 
 class Personnage:
     """Classe mère des différents personnages"""
@@ -25,13 +33,6 @@ class Personnage:
         self.HP = persos[userid]["HP"]
         self.DEF = persos[userid]["DEF"]
         self.ATK = persos[userid]["ATK"]
-        self.helmet = persos[userid]["helmet"]
-        self.ring = persos[userid]["ring"]
-        self.weapon = persos[userid]["weapon"]
-        self.belt = persos[userid]["belt"]
-        self.armor = persos[userid]["armor"]
-        self.boots = persos[userid]["boots"]
-        self.amulet = persos[userid]["amulet"]
         self.reputation = persos[userid]["reputation"]
         self.level = persos[userid]["level"]
         self.EXP = persos[userid]["EXP"]
@@ -52,6 +53,8 @@ class Personnage:
         self.guild = persos[userid]["guild"]
         self.avatar = persos[userid]["avatar"]
         self.inventory = persos[userid]["inventory"]
+        self.equipment = persos[userid]["equipment"]
+        self.equipment_invent = persos[userid]["equipment_invent"]
         self.id = userid
             
     def virgule(self, nombre):
@@ -67,15 +70,58 @@ class Personnage:
             i+=1
         return resultat
 
+    async def equip(self, bot, author, channel):
+        await bot.send_message(author,self.show_equipment())
+        await bot.send_message(author,"Please type the number corresponding to the equipment you want to equip, or `cancel` to cancel the equipment process!")
+        answer = await bot.wait_for_message(author = author, check=lambda m: m.channel.is_private, timeout= 60)
+        if answer == None:
+            msg = "I don't want to wait anymore, I cancel the equipment process!"
+        elif answer.content == "cancel":
+            msg = "Equipment process cancelled!"
+        else:
+            try:
+                answer = int(answer.content) - 1
+                if answer >= 0 and answer <= len(self.equipment_invent) - 1:
+                    persos = fileIO("data/rpg/Personnages.json", "load")
+                    equip = Equipement(self.equipment_invent[answer][0])
+                    types = {"helmet" : 0, "amulet" : 1, "armor" : 2, "ring" : 3, "belt" : 4, "weapon" : 5, "boots" : 6}
+                    print(str(self.equipment))
+                    temp = self.equipment[types[equip.type]]
+                    print("b1")
+                    persos[self.id]["equipment"][types[equip.type]] = equip.id
+                    persos[self.id]["equipment_invent"][answer][1] -= 1
+                    print("c")
+                    if persos[self.id]["equipment_invent"][answer][1] == 0:
+                        del persos[self.id]["equipment_invent"][answer - 1]
+                    if temp != "None":
+                        res = -1
+                        print("d")
+                        for i in range (0,len(persos[self.id]["equipment_invent"])):
+                            if persos[self.id]["equipment_invent"][0] == temp:
+                                res = i
+                                break
+                        print("e")
+                        if res == -1:
+                            persos[self.id]["equipment_invent"].append([temp,1])
+                        else:
+                            persos[self.id]["equipment_invent"][i][1] += 1
+                        print("f")
+                    fileIO("data/rpg/Personnages.json", "save", persos)
+                    msg = "Done!"
+                else:
+                    msg = "Please type a **correct number**! :grimacing:"
+            except ValueError:
+                msg = "Please type a **number**! :grimacing:"
+        await bot.send_message(author,msg)
+
     async def attrib_cpts(self, bot, author, channel):
-        persos = fileIO("data/rpg/Personnages.json", "load")
-        if persos[self.id]["CaracPoints"] != 0:
+        if self.CaracPoints != 0:
             msg = "```Markdown\n"
-            msg += "You've got " + str(persos[self.id]["CaracPoints"]) + " caracteristic points\n===============================================\n\n"
-            msg += "<Robustness = " + str(persos[self.id]["robustness"]) + ">\n"
-            msg += "<Strength = " + str(persos[self.id]["strength"]) + ">\n"
-            msg += "<Wisdom = " + str(persos[self.id]["wisdom"]) + ">\n"
-            msg += "<Deterity = " + str(persos[self.id]["dexterity"]) + ">\n\n"
+            msg += "You've got " + str(self.CaracPoints) + " caracteristic points\n===============================================\n\n"
+            msg += "<Robustness = " + str(self.robustness) + ">\n"
+            msg += "<Strength = " + str(self.strength) + ">\n"
+            msg += "<Wisdom = " + str(self.wisdom) + ">\n"
+            msg += "<Deterity = " + str(self.dexterity) + ">\n\n"
             msg += "#To attrib a x amount of points to a caracteristic, type 'caracteristic_name amount_value'\n\n"
             msg += "#Example : strength 3\n"
             msg += "```"
@@ -88,7 +134,8 @@ class Personnage:
                         value = int(a[1])
                         carac = a[0][0].upper() + a[0][1:]
                         if carac == "Strength" or carac == "Wisdom" or carac == "Dexterity" or carac == "Robustness":
-                            if value <= persos[self.id]["CaracPoints"]:
+                            if value <= self.CaracPoints:
+                                persos = fileIO("data/rpg/Personnages.json", "load")
                                 persos[self.id][carac[0].lower() + carac[1:]] += value
                                 persos[self.id]["CaracPoints"] -= value
                                 fileIO("data/rpg/Personnages.json", "save", persos)
@@ -110,13 +157,36 @@ class Personnage:
     def show_inventory(self):
         msg = "```Markdown\n"
         msg += "Here's your stuff:\n====================\n\n"
-        persos = fileIO("data/rpg/Personnages.json", "load")
-        if len(persos[self.id]["inventory"]) != 0:
-            for item in persos[self.id]["inventory"]:
+        if len(self.inventory) != 0:
+            for item in self.inventory:
                 msg += "[" + item[0] + "](x" + str(item[1]) + ")\n"
         else:
             msg += "No item :'(\n"
-        msg += "\n\n#Money " + str(persos[self.id]["money"]) + " ☼\n"
+        msg += "\n\n#Money " + str(self.money) + " ☼\n"
+        msg += "```"
+        return msg
+
+    def show_equipment(self):
+        msg = "```Markdown\n"
+        msg += "Here's your equipment:\n====================\n\n"
+        if len(self.equipment) == self.equipment.count("None"):
+            msg += "No equipped objects\n\n\n"
+        else:
+            i = 1
+            for item in self.equipment:
+                if item != "None":
+                    equip = Equipement(item)
+                    msg += "[" + equip.type + "](" + equip.name + ")\n"
+                    i += 1
+        msg += "\nHere's your equipment inventory:\n====================\n\n"
+        if len(self.equipment_invent) == 0:
+            msg += "No equipment stuff :'(\n\n"
+        else:
+            i = 1
+            for item in self.equipment_invent:
+                equip = Equipement(item[0])
+                msg += "[" + str(i) + "][" + equip.type + "][" + equip.name + " x" + str(item[1]) + "]\n"
+                i += 1
         msg += "```"
         return msg
 
@@ -176,8 +246,8 @@ class Personnage:
     def remove_item(self, item, nb):
         persos = fileIO("data/rpg/Personnages.json", "load")
         res = -1
-        for i in range (0,len(persos[self.id]["inventory"])):
-            if persos[self.id]["inventory"][i][0] == item:
+        for i in range (0,len(self.inventory)):
+            if self.inventory[i][0] == item:
                 res = i
                 break
         if res != -1:
@@ -188,7 +258,7 @@ class Personnage:
                 fileIO("data/rpg/Personnages.json", "save", persos)
                 msg = "Done!"
             else:
-                persos[user.id]["inventory"][res][1] -= nb
+                persos[self.id]["inventory"][res][1] -= nb
                 if persos[self.id]["inventory"][res][1] <= 0:
                     del persos[self.id]["inventory"][res]
                 fileIO("data/rpg/Personnages.json", "save", persos)
@@ -201,8 +271,8 @@ class Personnage:
         if nb > 0:
             persos = fileIO("data/rpg/Personnages.json", "load")
             res = -1
-            for i in range (0,len(persos[self.id]["inventory"])):
-                if persos[self.id]["inventory"][i][0] == item:
+            for i in range (0,len(self.inventory)):
+                if self.inventory[i][0] == item:
                     res = i
                     break
             if res == -1:
@@ -212,6 +282,52 @@ class Personnage:
                 persos[self.id]["inventory"][res][1] +=nb
                 fileIO("data/rpg/Personnages.json", "save", persos)
             msg = "Done!"
+        else:
+            msg = "Please type a **correct number**! :grimacing:"
+        return msg
+
+    def remove_equip(self, itemID, nb):
+        persos = fileIO("data/rpg/Personnages.json", "load")
+        res = -1
+        for i in range (0,len(self.equipment_invent)):
+            if self.equipment_invent[i][0] == itemID:
+                res = i
+                break
+        if res != -1:
+            if nb != - 1 and nb <= 0:
+                msg = "Please type a **correct number**! :grimacing:"
+            elif nb == - 1:
+                del persos[self.id]["equipment_invent"][res]
+                fileIO("data/rpg/Personnages.json", "save", persos)
+                msg = "Done!"
+            else:
+                persos[self.id]["equipment_invent"][res][1] -= nb
+                if persos[self.id]["equipment_invent"][res][1] <= 0:
+                    del persos[self.id]["equipment_invent"][res]
+                fileIO("data/rpg/Personnages.json", "save", persos)
+                msg = "Done!"
+        else:
+            msg = "<@" + self.id + "> don't even have this item! :grimacing:"
+        return msg
+
+    def give_equip(self, itemID, nb):
+        if nb > 0:
+            objets = fileIO("data/rpg/Objets.json", "load")
+            if itemID not in objets:
+                msg = "This object doesn't even exist"
+            else:
+                persos = fileIO("data/rpg/Personnages.json", "load")
+                res = -1
+                for i in range (0,len(self.equipment_invent)):
+                    if self.equipment_invent[i][0] == itemID:
+                        res = i
+                        break
+                if res == - 1:
+                    persos[self.id]["equipment_invent"].append([itemID,1])
+                else:
+                    persos[self.id]["equipment_invent"][res][1] +=nb
+                fileIO("data/rpg/Personnages.json", "save", persos)
+                msg = "Done!"
         else:
             msg = "Please type a **correct number**! :grimacing:"
         return msg
@@ -231,7 +347,7 @@ class Personnage:
         cadre_image = Image.open('data/rpg/cadre.png').convert('RGBA')
         cadre_image = cadre_image.resize(size=(145,145))
         result.paste(cadre_image,(27,87))
-        avatar = fileIO("data/rpg/Personnages.json", "load")[self.id]["avatar"]
+        avatar = self.avatar
         if avatar != "None":
             try:
                 r = requests.get(avatar)
@@ -242,22 +358,46 @@ class Personnage:
             avatar_image = Image.open('data/rpg/avatar.png').convert('RGBA')
         avatar_image = avatar_image.resize(size=(120,120))
         result.paste(avatar_image, (39,100))
+
+        #Silhouette
+        img = Image.open('data/rpg/Silhouette.png').convert("RGBA")
+        datas = img.getdata()
+        newData = []
+        for item in datas:
+            if item[0] > 200 or item[1] > 200 or item[2] > 200:
+                newData.append((255, 255, 255, 0))
+            else:
+                newData.append(item)
+        img.putdata(newData)
+        img = img.resize(size=(61,139))
+        result.paste(img, (70,234), img)
+
+        #Equipement
+        i = 0
+        places = [[94,235], [94,257], [94,275], [115,288], [94,292], [71,301], [94,357]]
+        for equip in self.equipment:
+            if equip != "None":
+                equipC = Equipement(equip)
+                img = Image.open(equipC.picture).convert('RGBA')
+                img = img.resize(size=(15,15))
+                result.paste(img, (places[i][0],places[i][1]))
+            i += 1
+
         fnt = ImageFont.truetype('data/rpg/Barthowheel Regular.ttf', 30)
         fnt2 = ImageFont.truetype('data/rpg/Minimoon.ttf', 23)
         fnt3 = ImageFont.truetype('data/rpg/Minimoon.ttf', 20)
-        persos = fileIO("data/rpg/Personnages.json", "load")
-        name = persos[self.id]["name"]
+        name = self.name
         name_width = fnt.getsize(name)[0]
-        classe = persos[self.id]["class"]
-        HP = self.virgule(str(persos[self.id]["HP"]))
-        ATK = self.virgule(str(persos[self.id]["ATK"]))
-        level = self.virgule(str(persos[self.id]["level"]))
-        robustness = self.virgule(str(persos[self.id]["robustness"]))
-        strength = self.virgule(str(persos[self.id]["strength"]))
-        wisdom = self.virgule(str(persos[self.id]["wisdom"]))
-        dexterity = self.virgule(str(persos[self.id]["dexterity"]))
-        reputation = self.virgule(str(persos[self.id]["reputation"]))
-        bounty = self.virgule(str(persos[self.id]["bounty"]))
+        classe = self.classe
+        HP = self.virgule(str(self.HP))
+        ATK = self.virgule(str(self.ATK))
+        level = self.virgule(str(self.level))
+        robustness = self.virgule(str(self.robustness))
+        strength = self.virgule(str(self.strength))
+        wisdom = self.virgule(str(self.wisdom))
+        dexterity = self.virgule(str(self.dexterity))
+        reputation = self.virgule(str(self.reputation))
+        bounty = self.virgule(str(self.bounty))
         bounty_width = fnt3.getsize(bounty)[0]
         d = ImageDraw.Draw(result)
         d.text((round(fond_width/2) - round(name_width/2), 40),name, font=fnt, fill=(0,0,0,0))
@@ -346,16 +486,6 @@ class Rpg:
         await self.bot.say(msg)
 
     @commands.command(pass_context=True)
-    async def attrib(self,ctx):
-        """To set your caracteristic points"""
-        self.personnages = fileIO("data/rpg/Personnages.json", "load")
-        if ctx.message.author.id in self.personnages:
-            a = Personnage(ctx.message.author.id)
-            await a.attrib_cpts(self.bot, ctx.message.author, ctx.message.channel)
-        else:
-            await self.bot.say("You don't even have a character! :grimacing:")
-
-    @commands.command(pass_context=True)
     async def create_mychar(self,ctx):
         """Starting a new adventure"""
         self.personnages = fileIO("data/rpg/Personnages.json", "load")
@@ -394,13 +524,6 @@ class Rpg:
                                 self.personnages[ctx.message.author.id]["HP"] = self.classes[name_class]["Base HP"]
                                 self.personnages[ctx.message.author.id]["DEF"] = self.classes[name_class]["Base DEF"]
                                 self.personnages[ctx.message.author.id]["ATK"] = self.classes[name_class]["Base ATK"]
-                                self.personnages[ctx.message.author.id]["helmet"] = None
-                                self.personnages[ctx.message.author.id]["ring"] = None
-                                self.personnages[ctx.message.author.id]["weapon"] = None
-                                self.personnages[ctx.message.author.id]["belt"] = None
-                                self.personnages[ctx.message.author.id]["armor"] = None
-                                self.personnages[ctx.message.author.id]["boots"] = None
-                                self.personnages[ctx.message.author.id]["amulet"] = None
                                 self.personnages[ctx.message.author.id]["reputation"] = 0
                                 self.personnages[ctx.message.author.id]["level"] = 1
                                 self.personnages[ctx.message.author.id]["EXP"] = 0
@@ -418,8 +541,10 @@ class Rpg:
                                 self.personnages[ctx.message.author.id]["dexterity"] = 0
                                 self.personnages[ctx.message.author.id]["money"] = 0
                                 self.personnages[ctx.message.author.id]["skill"] = 100
-                                self.personnages[ctx.message.author.id]["guild"] = None
+                                self.personnages[ctx.message.author.id]["guild"] = "None"
                                 self.personnages[ctx.message.author.id]["inventory"] = []
+                                self.personnages[ctx.message.author.id]["equipment"] = ["None", "None", "None", "None", "None", "None", "None"]
+                                self.personnages[ctx.message.author.id]["equipment_invent"] = []
                                 if len(ctx.message.author.avatar_url) != 0:
                                     self.personnages[ctx.message.author.id]["avatar"] = ctx.message.author.avatar_url
                                 else:
@@ -499,6 +624,16 @@ class Rpg:
             await self.bot.say("You don't even have a character! :grimacing:")
 
     @commands.command(pass_context=True)
+    async def attrib(self,ctx):
+        """To set your caracteristic points"""
+        self.personnages = fileIO("data/rpg/Personnages.json", "load")
+        if ctx.message.author.id in self.personnages:
+            a = Personnage(ctx.message.author.id)
+            await a.attrib_cpts(self.bot, ctx.message.author, ctx.message.channel)
+        else:
+            await self.bot.say("You don't even have a character! :grimacing:")
+
+    @commands.command(pass_context=True)
     async def inventory(self,ctx):
         """Show your inventory throuhgh a private message"""
         self.personnages = fileIO("data/rpg/Personnages.json", "load")
@@ -509,8 +644,28 @@ class Rpg:
             await self.bot.say("You don't even have a character! :grimacing:")
 
     @commands.command(pass_context=True)
+    async def equipment(self,ctx):
+        """Show your inventory throuhgh a private message"""
+        self.personnages = fileIO("data/rpg/Personnages.json", "load")
+        if ctx.message.author.id in self.personnages:
+            a = Personnage(ctx.message.author.id)
+            await self.bot.send_message(ctx.message.author, a.show_equipment())
+        else:
+            await self.bot.say("You don't even have a character! :grimacing:")
+
+    @commands.command(pass_context=True)
+    async def equip(self, ctx):
+        """To change your equipment"""
+        self.personnages = fileIO("data/rpg/Personnages.json", "load")
+        if ctx.message.author.id in self.personnages:
+            a = Personnage(ctx.message.author.id)
+            await a.equip(self.bot, ctx.message.author, ctx.message.channel)
+        else:
+            await self.bot.say("You don't even have a character! :grimacing:")
+
+    @commands.command(pass_context=True)
     @checks.is_owner()
-    async def give_item(self,ctx, user : discord.Member, item : str, nb : int):
+    async def give_item(self,ctx, user : discord.Member, item : str, nb : int = 1):
         """Give an amount of an item to a member"""
         self.personnages = fileIO("data/rpg/Personnages.json", "load")
         if user.id in self.personnages:
@@ -532,6 +687,28 @@ class Rpg:
 
     @commands.command(pass_context=True)
     @checks.is_owner()
+    async def give_equip(self,ctx, user : discord.Member, itemID : str, nb : int = 1):
+        """Give an amount of an equipment to a member"""
+        self.personnages = fileIO("data/rpg/Personnages.json", "load")
+        if user.id in self.personnages:
+            a = Personnage(user.id)
+            await self.bot.say(a.give_equip(itemID,nb))
+        else:
+            await self.bot.say(user.name + " don't even have a character! :grimacing:")
+
+    @commands.command(pass_context=True)
+    @checks.is_owner()
+    async def remove_equip (self,ctx, user : discord.Member, itemID : str, nb : int = -1):
+        """To remove an amount of an equipment to a member"""
+        self.personnages = fileIO("data/rpg/Personnages.json", "load")
+        if user.id in self.personnages:
+            a = Personnage(user.id)
+            await self.bot.say(a.remove_equip(itemID,nb))
+        else:
+            await self.bot.say(user.name + " don't even have a character! :grimacing:")
+
+    @commands.command(pass_context=True)
+    @checks.is_owner()
     async def set_char(self,ctx, user : discord.Member, carac : str, *value):
         """Set a caracteristic to a value for a specified member"""
         self.personnages = fileIO("data/rpg/Personnages.json", "load")
@@ -547,12 +724,15 @@ class Rpg:
                     except ValueError:
                         await self.bot.say("The format of the caracteristic isn't correct! :grimacing:")
                 elif str(type(self.personnages[user.id][carac])) == "<class 'list'>":
-                    value = value.split("#")
-                    try:
-                        for entry in value:
-                            entry = int(entry)
-                    except ValueError:
-                        pass
+                    if value == "[]":
+                        value = []
+                    else:
+                        value = value.split("#")
+                        try:
+                            for entry in value:
+                                entry = int(entry)
+                        except ValueError:
+                            pass
                     self.personnages[user.id][carac] = value
                     fileIO("data/rpg/Personnages.json", "save", self.personnages)
                     await self.bot.say("The caracteristic has been successfully updated!")
