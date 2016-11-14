@@ -12,6 +12,36 @@ from PIL import Image, ImageDraw, ImageFont, ImageColor
 from io import BytesIO
 import requests
 
+
+
+class Classe:
+
+    def __init__(self, classname):
+        classes = fileIO("data/rpg/Classes.json", "load")
+        self.name = classname
+        self.BaseHP = classes[classname]["Base HP"]
+        self.HP_per_level = classes[classname]["HP per level"]
+        self.BaseDEF = classes[classname]["Base DEF"]
+        self.DEF_per_level = classes[classname]["DEF per level"]
+        self.BaseATK = classes[classname]["Base ATK"]
+        self.ATK_per_level = classes[classname]["ATK per level"]
+        self.description = classes[classname]["description"]
+        self.particularites = classes[classname]["particularites"]
+
+    def presentation(self):
+        msg = ""
+        msg += "" + self.name + "\n===========================\n\n<"
+        msg += "Initial HP = " + str(self.BaseHP) + ">\n<"
+        msg += "HP per level = " + str(self.HP_per_level) + ">\n<"
+        msg += "Initial ATK = " + str(self.BaseATK) + ">\n<"
+        msg += "ATK per level = " + str(self.ATK_per_level) + ">\n<"
+        msg += "Initial Defense = " + str(self.BaseDEF) + ">\n<"
+        msg += "Defense per level = " + str(self.DEF_per_level) + ">\n\n#"
+        msg += self.description + "\n\n["
+        msg += "Particularities](" + self.particularites + ")\n\n\n\n\n"
+        return msg
+
+
 class Equipement:
 
     def __init__(self, equipID):
@@ -23,6 +53,17 @@ class Equipement:
         self.type = objets[equipID]["type"]
         self.level = objets[equipID]["level"]
         self.id = equipID
+
+    def presentation(self):
+        msg = self.name + "\n===========================\n\n"
+        msg += "[type](" + self.type + ")\n"
+        msg += "[level](" + str(self.level) + ")\n"
+        msg += "[price](" + str(self.price) + " ☼)\n"
+        msg += "#Bonus\n"
+        for bonus in self.bonus:
+            res = bonus.split(" ")
+            msg += "<" + res[0] + " = " + res[1] + ">\n"
+        return msg
 
 class Personnage:
     """Classe mère des différents personnages"""
@@ -55,6 +96,7 @@ class Personnage:
         self.inventory = persos[userid]["inventory"]
         self.equipment = persos[userid]["equipment"]
         self.equipment_invent = persos[userid]["equipment_invent"]
+        self.creation_date = persos[userid]["creation_date"]
         self.id = userid
             
     def virgule(self, nombre):
@@ -263,13 +305,12 @@ class Personnage:
         gainLevel = niv - persos[self.id]["level"]
         msg = "`You won " + str(nbXP) + " EXP!"
         if niv != persos[self.id]["level"]:
-            classes = fileIO("data/rpg/Classes.json", "load")
-            classe = persos[self.id]["class"]
-            HP_won = classes[classe]["HP per level"]*gainLevel
+            classe = Classe(self.classe)
+            HP_won = classe.HP_per_level*gainLevel
             persos[self.id]["HP"] += HP_won
-            ATK_won = classes[classe]["ATK per level"]*gainLevel
+            ATK_won = classe.ATK_per_level*gainLevel
             persos[self.id]["ATK"] += ATK_won
-            DEF_won = classes[classe]["DEF per level"]*gainLevel
+            DEF_won = classe.DEF_per_level*gainLevel
             persos[self.id]["DEF"] += DEF_won
             persos[self.id]["level"] = niv
             CaracPoints_won = 5*gainLevel
@@ -462,6 +503,7 @@ class Rpg:
         self.masterid = fileIO("data/red/settings.json", "load")["OWNER"]
         self.personnages = fileIO("data/rpg/Personnages.json", "load")
         self.classes =  fileIO("data/rpg/Classes.json", "load")
+        self.objets = fileIO("data/rpg/Objets.json", "load")
         self.banlist = fileIO("data/rpg/banlist.json", "load")
         self.version_module = "1.0.0"
 
@@ -585,6 +627,7 @@ class Rpg:
                                 self.personnages[ctx.message.author.id]["inventory"] = []
                                 self.personnages[ctx.message.author.id]["equipment"] = ["None", "None", "None", "None", "None", "None", "None"]
                                 self.personnages[ctx.message.author.id]["equipment_invent"] = []
+                                self.personnages[ctx.message.author.id]["creation_date"] = str(ctx.message.timestamp)[:-7]
                                 if len(ctx.message.author.avatar_url) != 0:
                                     self.personnages[ctx.message.author.id]["avatar"] = ctx.message.author.avatar_url
                                 else:
@@ -811,6 +854,29 @@ class Rpg:
             await self.bot.say(user.name + " don't even have a character! :grimacing:")
 
     @commands.command()
+    async def infos_equip(self, *name):
+        """Get infos from a specified equipment"""
+        self.objets = fileIO("data/rpg/Objets.json", "load")
+        name = " ".join(name)
+        if name != "":
+            name = name.lower()
+            equip = None
+            for objet in self.objets:
+                if self.objets[objet]["name"].lower() == name:
+                    equip = Equipement(objet)
+                    break
+            if equip != None:
+                msg = "```Markdown\n"
+                msg += equip.presentation()
+                msg += "```"
+                await self.bot.say(msg)
+            else:
+                await self.bot.say("There's no such equipment...") 
+        else:
+            await self.bot.say("Please type an equipment name! :grimacing:")
+
+
+    @commands.command()
     async def infos_class(self, name : str = ""):
         """Get infos from a specified classe or for all the existing ones"""
         self.classes =  fileIO("data/rpg/Classes.json", "load")
@@ -822,25 +888,11 @@ class Rpg:
             msg = "```Markdown\n"
             if name == "":
                 for classe in self.classes:
-                    msg += "" + classe + "\n===========================\n\n<"
-                    msg += "Initial HP = " + str(self.classes[classe]["Base HP"]) + ">\n<"
-                    msg += "HP per level = " + str(self.classes[classe]["HP per level"]) + ">\n<"
-                    msg += "Initial ATK = " + str(self.classes[classe]["Base ATK"]) + ">\n<"
-                    msg += "ATK per level = " + str(self.classes[classe]["ATK per level"]) + ">\n<"
-                    msg += "Initial Defense = " + str(self.classes[classe]["Base DEF"]) + ">\n<"
-                    msg += "Defense per level = " + str(self.classes[classe]["DEF per level"]) + ">\n\n#"
-                    msg += self.classes[classe]["description"] + "\n\n["
-                    msg += "Particularities](" + self.classes[classe]["particularites"] + ")\n\n\n\n\n"
+                    a = Classe(classe)
+                    msg += a.presentation()
             else:
-                msg += "" + name + "\n===========================\n\n<"
-                msg += "Initial HP = " + str(self.classes[name]["Base HP"]) + ">\n<"
-                msg += "HP per level = " + str(self.classes[name]["HP per level"]) + ">\n<"
-                msg += "Initial ATK = " + str(self.classes[name]["Base ATK"]) + ">\n<"
-                msg += "ATK per level = " + str(self.classes[name]["ATK per level"]) + ">\n<"
-                msg += "Initial Defense = " + str(self.classes[name]["Base DEF"]) + ">\n<"
-                msg += "Defense per level = " + str(self.classes[name]["DEF per level"]) + ">\n\n#"
-                msg += self.classes[name]["description"] + "\n\n["
-                msg += "Particularities](" + self.classes[name]["particularites"] + ")\n\n\n\n\n"
+                a = Classe(name)
+                msg += a.presentation()
             msg += "```"
             await self.bot.say(msg)
 
