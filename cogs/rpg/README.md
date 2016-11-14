@@ -10,7 +10,9 @@
 
 2 : Added the unequip command -> To unequip an item ; the equip command was only allowing you to replace an item
 
-3 : Fixed some others minor problems
+3: Added the infos_equip command -> To get the infos from an equipment object
+
+4 : Fixed some others minor problems
 ```
 
 ## TO-DO List:
