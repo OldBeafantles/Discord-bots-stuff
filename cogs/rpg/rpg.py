@@ -70,7 +70,7 @@ class Personnage:
             i+=1
         return resultat
 
-    async def equip(self, bot, author, channel):
+    async def equip(self, bot, author):
         await bot.send_message(author,self.show_equipment())
         await bot.send_message(author,"Please type the number corresponding to the equipment you want to equip, or `cancel` to cancel the equipment process!")
         answer = await bot.wait_for_message(author = author, check=lambda m: m.channel.is_private, timeout= 60)
@@ -84,35 +84,77 @@ class Personnage:
                 if answer >= 0 and answer <= len(self.equipment_invent) - 1:
                     persos = fileIO("data/rpg/Personnages.json", "load")
                     equip = Equipement(self.equipment_invent[answer][0])
-                    types = {"helmet" : 0, "amulet" : 1, "armor" : 2, "ring" : 3, "belt" : 4, "weapon" : 5, "boots" : 6}
-                    print(str(self.equipment))
-                    temp = self.equipment[types[equip.type]]
-                    print("b1")
-                    persos[self.id]["equipment"][types[equip.type]] = equip.id
-                    persos[self.id]["equipment_invent"][answer][1] -= 1
-                    print("c")
-                    if persos[self.id]["equipment_invent"][answer][1] == 0:
-                        del persos[self.id]["equipment_invent"][answer - 1]
-                    if temp != "None":
-                        res = -1
-                        print("d")
-                        for i in range (0,len(persos[self.id]["equipment_invent"])):
-                            if persos[self.id]["equipment_invent"][0] == temp:
-                                res = i
-                                break
-                        print("e")
-                        if res == -1:
-                            persos[self.id]["equipment_invent"].append([temp,1])
-                        else:
-                            persos[self.id]["equipment_invent"][i][1] += 1
-                        print("f")
-                    fileIO("data/rpg/Personnages.json", "save", persos)
-                    msg = "Done!"
+                    if self.level >= equip.level:
+                        types = {"helmet" : 0, "amulet" : 1, "armor" : 2, "ring" : 3, "belt" : 4, "weapon" : 5, "boots" : 6}
+                        temp = self.equipment[types[equip.type]]
+                        persos[self.id]["equipment"][types[equip.type]] = equip.id
+                        persos[self.id]["equipment_invent"][answer][1] -= 1
+                        if persos[self.id]["equipment_invent"][answer][1] == 0:
+                            del persos[self.id]["equipment_invent"][answer]
+                        if temp != "None":
+                            res = -1
+                            for i in range (0,len(persos[self.id]["equipment_invent"])):
+                                if persos[self.id]["equipment_invent"][0] == temp:
+                                    res = i
+                                    break
+                            if res == -1:
+                                persos[self.id]["equipment_invent"].append([temp,1])
+                            else:
+                                persos[self.id]["equipment_invent"][i][1] += 1
+                        fileIO("data/rpg/Personnages.json", "save", persos)
+                        msg = "Done!"
+                    else:
+                        msg = "You don't have the required level to equip this item! :grimacing:"
                 else:
                     msg = "Please type a **correct number**! :grimacing:"
             except ValueError:
                 msg = "Please type a **number**! :grimacing:"
         await bot.send_message(author,msg)
+
+    async def unequip(self, bot, author):
+        if len(self.equipment) == self.equipment.count("None"):
+            await bot.send_message(author,"You don't have any equipped item! :'(")
+        else:
+            msg = "```Markdown\n"
+            msg += "Here's your equipment:\n====================\n\n"
+            i = 1
+            for item in self.equipment:
+                if item != "None":
+                    equip = Equipement(item)
+                    msg += "[" + str(i) + "][" + equip.type + "](" + equip.name + ")\n"
+                i += 1
+            msg += "```"
+            await bot.send_message(author,msg)
+            await bot.send_message(author,"Please type the number corresponding to the equipment you want to unequip, or `cancel` to cancel the unequipment process!")
+            answer = await bot.wait_for_message(author = author, check=lambda m: m.channel.is_private, timeout= 60)
+            if answer == None:
+                msg = "I don't want to wait anymore, I cancel the equipment process!"
+            elif answer.content == "cancel":
+                msg = "Equipment process cancelled!"
+            else:
+                try:
+                    answer = int(answer.content) - 1
+                    if self.equipment[answer] != "None":
+                        persos = fileIO("data/rpg/Personnages.json", "load")
+                        equip = Equipement(self.equipment[answer])
+                        res = -1
+                        for i in range (0,len(persos[self.id]["equipment_invent"])):
+                            if persos[self.id]["equipment_invent"][0] == equip.id:
+                                res = i
+                                break
+                        if res == -1:
+                            persos[self.id]["equipment_invent"].append([equip.id,1])
+                        else:
+                            persos[self.id]["equipment_invent"][res][1] += 1
+                        persos[self.id]["equipment"][answer] = "None"
+                        fileIO("data/rpg/Personnages.json", "save", persos)
+                        msg = "Done."
+                    else:
+                        msg = "Please type a **correct number**! :grimacing:"
+                except ValueError:
+                    msg = "Please type a **number**! :grimacing:"
+            await bot.send_message(author,msg)
+
 
     async def attrib_cpts(self, bot, author, channel):
         if self.CaracPoints != 0:
@@ -172,12 +214,10 @@ class Personnage:
         if len(self.equipment) == self.equipment.count("None"):
             msg += "No equipped objects\n\n\n"
         else:
-            i = 1
             for item in self.equipment:
                 if item != "None":
                     equip = Equipement(item)
                     msg += "[" + equip.type + "](" + equip.name + ")\n"
-                    i += 1
         msg += "\nHere's your equipment inventory:\n====================\n\n"
         if len(self.equipment_invent) == 0:
             msg += "No equipment stuff :'(\n\n"
@@ -659,7 +699,17 @@ class Rpg:
         self.personnages = fileIO("data/rpg/Personnages.json", "load")
         if ctx.message.author.id in self.personnages:
             a = Personnage(ctx.message.author.id)
-            await a.equip(self.bot, ctx.message.author, ctx.message.channel)
+            await a.equip(self.bot, ctx.message.author)
+        else:
+            await self.bot.say("You don't even have a character! :grimacing:")
+
+    @commands.command(pass_context=True)
+    async def unequip(self,ctx):
+        """To unequip an item"""
+        self.personnages = fileIO("data/rpg/Personnages.json", "load")
+        if ctx.message.author.id in self.personnages:
+            a = Personnage(ctx.message.author.id)
+            await a.unequip(self.bot, ctx.message.author)
         else:
             await self.bot.say("You don't even have a character! :grimacing:")
 
