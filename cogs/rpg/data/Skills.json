@@ -1,0 +1,101 @@
+{
+    "1" :
+    {
+        "name" : "Basical attack",
+        "types" : ["attack"],
+        "nbTargetEn" : 1,
+        "nbTargetAl" : 0,
+        "cooldown" : 0,
+        "cdInit": 0,
+        "usesPerTurnMax" : 2,
+        "energy" : 4,
+        "states" : {"allies" : [], "ennemies" : []},
+        "selfTarget" : [false],
+        "type_damage" : ["earth"],
+        "basic_value" : [10],
+        "coeff" : [1.25],
+        "pourcentage" : [[false,""]],
+        "fixed_damage" : [false],
+        "description" : "Deal 10 + 1.25 x STR damages to one ennemy"
+    },
+
+    "2" :
+    {
+        "name" : "Basical heal",
+        "types" : ["heal"],
+        "nbTargetEn" : 0,
+        "nbTargetAl" : 1,
+        "cooldown" : 1,
+        "cdInit": 0,
+        "usesPerTurnMax" : 1,
+        "energy" : 2,
+        "states" : {"allies" : ["heal#0#direct"], "ennemies" : []},
+        "selfTarget" : [true],
+        "type_damage" : ["water"],
+        "basic_value" : [10],
+        "coeff" : [1],
+        "pourcentage" : [[false,""]],
+        "fixed_damage" : [false],
+        "description" : "Heal 10 + 1 x WIS HP to an ally (or yourself)"
+    },
+
+    "3" :
+    {
+        "name" : "Poisoned dagger",
+        "types" : ["poison"],
+        "nbTargetEn" : 1,
+        "nbTargetAl" : 0,
+        "cooldown" : 0,
+        "cdInit": 0,
+        "usesPerTurnMax" : 2,
+        "energy" : 3,
+        "states" : {"allies" : [], "ennemies" : ["poison#3#endOwnTurn"]},
+        "selfTarget" : [false],
+        "type_damage" : ["air"],
+        "basic_value" : [3],
+        "coeff" : [0.5],
+        "pourcentage" : [[false,""]],
+        "fixed_damage" : [true],
+        "description" : "Deal 3 + 0.5 x DEX damages to an ennemy and poison him for 3 turns"
+    },
+
+    "4" :
+    {
+        "name" : "Small protection",
+        "types" : ["DEF boost"],
+        "nbTargetEn" : 0,
+        "nbTargetAl" : 0,
+        "cooldown" : 4,
+        "cdInit": 0,
+        "usesPerTurnMax" : 1,
+        "energy" : 2,
+        "states" : {"allies" : ["%DEF boost#2#direct"], "ennemies" : []},
+        "selfTarget" : [true],
+        "type_damage" : ["fire"],
+        "basic_value" : [50],
+        "coeff" : [0.03],
+        "pourcentage" : [[false,""]],
+        "fixed_damage" : [false],
+        "description" : "Boost your DEF by 50 + 0.03 x ROB % for 2 turns"
+    },
+
+    "5" :
+    {
+        "name" : "Demonic heal",
+        "types" : ["heal"],
+        "nbTargetEn" : 0,
+        "nbTargetAl" : 0,
+        "cooldown" : 6,
+        "cdInit": 0,
+        "usesPerTurnMax" : 1,
+        "energy" : 0,
+        "states" : {"allies" : ["heal#0#direct"], "ennemies" : []},
+        "selfTarget" : true,
+        "type_damage" : ["fire"],
+        "basic_value" : [0],
+        "coeff" : [0.25],
+        "pourcentage" : [[true,"Lost HP"]],
+        "fixed_damage" : [false],
+        "description" : "Heal yourself for 0.25 x Lost HP in pourcentage" 
+    }
+}

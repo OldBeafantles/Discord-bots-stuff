@@ -1,0 +1,127 @@
+{
+    "001":
+    {
+    	"name" : "Rookie cap",
+    	"bonus" : ["HP 10", "ATK 3", "DEF 2", "ROB 5", "STR 5", "WIS 5", "DEX 5"],
+    	"picture" : "data/rpg/Images/Icons/Equipments/Rookie cap.png",
+    	"price" : 150,
+        "sellable" : true,
+        "place" : 5,
+        "stack" : 1,
+    	"type" : "helmet",
+    	"level" : 1,
+        "description" : "Merely a cap for noobies"
+    },
+
+	"101":
+    {
+    	"name" : "Rookie amulet",
+    	"bonus" : ["HP 10", "ATK 3", "DEF 2", "ROB 5", "STR 5", "WIS 5", "DEX 5"],
+    	"picture" : "data/rpg/Images/Icons/Equipments/Rookie amulet.png",
+    	"price" : 150,
+        "sellable" : true,
+        "place" : 3,
+        "stack" : 2,
+    	"type" : "amulet",
+    	"level" : 1,
+        "description" : "Merely an amulet for noobies"
+    },
+
+    "102":
+    {
+        "name" : "Copper amulet",
+        "bonus" : ["HP 15", "ATK 5", "DEF 3", "ROB 7", "STR 7", "WIS 7", "DEX 7"],
+        "picture" : "data/rpg/Images/Icons/Equipments/Copper amulet.png",
+        "price" : 200,
+        "sellable" : true,
+        "place" : 3,
+        "stack" : 2,
+        "type" : "amulet",
+        "level" : 5,
+        "description" : "An amulet for beginners"
+    },
+
+	"201":
+    {
+    	"name" : "Rookie tunic",
+    	"bonus" : ["HP 10", "ATK 3", "DEF 2", "ROB 5", "STR 5", "WIS 5", "DEX 5"],
+    	"picture" : "data/rpg/Images/Icons/Equipments/Rookie tunic.png",
+    	"price" : 150,
+        "sellable" : true,
+        "place" : 8,
+        "stack" : 1,
+    	"type" : "armor",
+    	"level" : 1,
+        "description" : "Merely a tunic for noobies"
+    },
+
+    "301":
+    {
+    	"name" : "Rookie ring",
+    	"bonus" : ["HP 10", "ATK 3", "DEF 2", "ROB 5", "STR 5", "WIS 5", "DEX 5"],
+    	"picture" : "data/rpg/Images/Icons/Equipments/Rookie ring.png",
+    	"price" : 150,
+        "sellable" : true,
+        "place" : 2,
+        "stack" : 5,
+    	"type" : "ring",
+    	"level" : 1,
+        "description" : "Merely a ring for noobies"
+    },
+
+    "302":
+    {
+        "name" : "Copper ring",
+        "bonus" : ["HP 15", "ATK 5", "DEF 3", "ROB 7", "STR 7", "WIS 7", "DEX 7"],
+        "picture" : "data/rpg/Images/Icons/Equipments/Copper ring.png",
+        "price" : 200,
+        "sellable" : true,
+        "place" : 2,
+        "stack" : 5,
+        "type" : "ring",
+        "level" : 5,
+        "description" : "A ring for beginners"
+    },
+
+    "401":
+    {
+    	"name" : "Rookie belt",
+    	"bonus" : ["HP 10", "ATK 3", "DEF 2", "ROB 5", "STR 5", "WIS 5", "DEX 5"],
+    	"picture" : "data/rpg/Images/Icons/Equipments/Rookie belt.png",
+    	"price" : 150,
+        "sellable" : true,
+        "place" : 4,
+        "stack" : 1,
+    	"type" : "belt",
+    	"level" : 1,
+        "description" : "Merely a belt for noobies"
+    },
+
+    "501":
+    {
+    	"name" : "Rookie stick",
+    	"bonus" : ["HP 10", "ATK 3", "DEF 2", "ROB 5", "STR 5", "WIS 5", "DEX 5"],
+    	"picture" : "data/rpg/Images/Icons/Equipments/Rookie stick.png",
+    	"price" : 150,
+        "sellable" : true,
+        "place" : 6,
+        "stack" : 1,
+    	"type" : "weapon",
+    	"level" : 1,
+        "description" : "Merely a stick for noobies"
+    },
+
+    "601":
+    {
+    	"name" : "Rookie clog",
+    	"bonus" : ["HP 10", "ATK 3", "DEF 2", "ROB 5", "STR 5", "WIS 5", "DEX 5"],
+    	"picture" : "data/rpg/Images/Icons/Equipments/Rookie clog.png",
+    	"price" : 150,
+        "sellable" : true,
+        "place" : 5,
+        "stack" : 1,
+    	"type" : "boots",
+    	"level" : 1,
+        "description" : "Merely a clog for noobies"
+    }
+}

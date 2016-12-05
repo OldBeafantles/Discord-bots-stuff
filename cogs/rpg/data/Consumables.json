@@ -1,0 +1,13 @@
+{
+    "1":
+    {
+    	"name" : "Apple",
+    	"effects" : ["Heal 15"],
+    	"picture" : "data/rpg/Images/Icons/Consumables/Apple.png",
+    	"price" : 10,
+        "sellable" : true,
+        "place" : 2,
+        "stack" : 3,
+        "description" : "Merely just a little apple!"
+    }
+}

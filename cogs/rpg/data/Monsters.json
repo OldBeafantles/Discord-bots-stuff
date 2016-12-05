@@ -1,0 +1,56 @@
+{
+
+    "1":
+    {
+        "name" : "Mad cat",
+        "font" : "DEFAULT_MONSTER_FONT",
+        "color font" : "000000",
+        "size font" : 14,
+        "avatar" : "data/rpg/Images/monsters/mad_cat.png",
+        "avatar2" : "data/rpg/Images/monsters/mad_cat2.png",
+        "condition avatar" : "%HP remaining <= 10",
+        "level" : [1,3],
+        "Base ATK" : 3,
+        "ATK per level" : 2,
+        "Base DEF" : 1,
+        "DEF per level" : 1,
+        "Base HP" : 50,
+        "HP per level" : 10,
+        "Base STR" : 3,
+        "STR per level" : 2,
+        "Base DEX" : 10,
+        "DEX per level" : 4,
+        "Base WIS" : 0,
+        "WIS per level" : 0,
+        "Base ROB" : 0,
+        "ROB per level" : 0,
+        "Base RES AIR" : 0.0,
+        "RES AIR per level" : 0.0,
+        "Base RES FIRE" : -50.0,
+        "RES FIRE per level" : 5.0,
+        "Base RES EARTH" : 0.0,
+        "RES EARTH per level" : 0.0,
+        "Base RES WATER" : -100.0,
+        "RES WATER per level" : 10.0,
+        "Base ENERGY" : 4,
+        "ENERGY per level" : 0,
+        "Base EXP" : 3,
+        "EXP per level" : 2,
+        "drops" :   {
+                        "equipments" : [],
+                        "consumables" : [],
+                        "objects" : [["1", 500, 3], ["2", 500, 3], ["3", 10, 1]]
+                    },
+        "IA 1" :    {
+                        "1" : ["1", "cruel-selfish"],
+                        "2" : ["1", "cruel-altruistic"]
+                    },
+        "IA 2" :    {
+                        "1": [["1", {"allies" : "None", "ennemies" : "best level"}], ["2", {"allies" : "himself", "ennemies" : "None"}]]
+                    },
+        "pattern" : [["IA 2", "1"], ["IA 1", "1"], ["IA 1", "2"]],
+        "conditions" : ["%HP remaining <= 25"],
+        "skills" : ["1", "2"],
+        "description" : "A kawaii little cat who doesn't seem to like you a lot :c"
+    }
+}

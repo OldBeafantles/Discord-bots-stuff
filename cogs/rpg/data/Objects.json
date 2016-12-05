@@ -1,0 +1,34 @@
+{
+    "1":
+    {
+        "name" : "Mad cat hair",
+        "picture" : "data/rpg/Images/Icons/Objects/Mad cat hair.png",
+        "price" : 3,
+        "sellable" : true,
+        "place" : 1,
+        "stack" : 50,
+        "description" : "Merely just a hair of a mad cat..."
+    },
+
+    "2":
+    {
+        "name" : "Mad cat tail",
+        "picture" : "data/rpg/Images/Icons/Objects/Mad cat tail.png",
+        "price" : 3,
+        "sellable" : true,
+        "place" : 1,
+        "stack" : 50,
+        "description" : "Merely just a tail of a mad cat..."
+    },
+
+    "3":
+    {
+        "name" : "Mad cat ear",
+        "picture" : "data/rpg/Images/Icons/Objects/Mad cat ear.png",
+        "price" : 35,
+        "sellable" : true,
+        "place" : 1,
+        "stack" : 3,
+        "description" : "Wow! That's a mad cat ear!"
+    }
+}

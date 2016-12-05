@@ -1,0 +1,13 @@
+{
+
+    "1":
+    {
+        "name" : "Agressive",
+        "priorities" : ["win", "kill", "hurt", "curse", "boost", "heal"],
+        "targets_type":
+        {
+            "cruel-selfish" : ["ennemy random", "ennemy best ATK", "ennemy weakest level", "ennemy best ATK", "himself", "himself"],
+            "cruel-altruistic" : ["ennemy random", "ennemy best ATK", "ennemy weakest level", "ennemy best ATK", "ally random", "ally random"]
+        }
+    }
+}
