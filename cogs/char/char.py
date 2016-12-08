@@ -52,19 +52,22 @@ class Char:
 
         msg += "#Please type the number of the character you want to get infos from!\n```"
 
-        await self.bot.send_message(channel, msg)
-        answer = await self.bot.wait_for_message(author = author, channel = channel, timeout = 60)
-        if answer == None:
-            return 0
+        if len(msg) <= 2000:
+            await self.bot.send_message(channel, msg)
+            answer = await self.bot.wait_for_message(author = author, channel = channel, timeout = 60)
+            if answer == None:
+                return 0
+            else:
+                try:
+                    number = int(answer.content)
+                    if number > 0 and number < len(text) + 1:
+                        return listNum[number - 1]
+                    else:
+                        return -1
+                except ValueError:
+                    return -2
         else:
-            try:
-                number = int(answer.content)
-                if number > 0 and number < len(text) + 1:
-                    return listNum[number - 1]
-                else:
-                    return -1
-            except ValueError:
-                return -2
+            return -3
 
 
 
@@ -87,7 +90,6 @@ class Char:
         embed = discord.Embed(title = title, colour = color)
         
         embed.set_author(name = "Beafantles", icon_url = "https://discordapp.com/api/users/151661401411289088/avatars/885f299c00c8765aad38b3ba50d6695d.jpg")
-        #embed.set_footer(text = "Creator", icon_url = "https://discordapp.com/api/users/151661401411289088/avatars/885f299c00c8765aad38b3ba50d6695d.jpg")
         embed.set_thumbnail(url = "http://onepiece-treasurecruise.com/wp-content/uploads/f" + "0" * (4 - len(str(charNum))) + str(charNum) + ".png")
         embed.add_field(name = "Type", value = text[1], inline = True)
 
@@ -170,31 +172,33 @@ class Char:
         jsonText = json.loads(temp)
 
         #Captain ability
-        embed.add_field(name = "Captain ability", value = jsonText[str(charNum)]["captain"], inline = False)
+        if "captain" in jsonText[str(charNum)]:
+            embed.add_field(name = "Captain ability", value = jsonText[str(charNum)]["captain"], inline = False)
 
         #Special
-        if type(jsonText[str(charNum)]["special"]) != list:
-            embed.add_field(name = jsonText[str(charNum)]["specialName"], value = jsonText[str(charNum)]["special"], inline = False)
-            cd = requests.get(LINK + "cooldowns.js")
-            cdInfos = cd.text
-            cdData = cdInfos.split("\n")
-            if "null" not in cdData[charNum]:
-                cdJson = json.loads(cdData[charNum][:-1])
-                if type(cdJson) == list:
-                    if cdJson[0] != cdJson[1]:
-                        embed.add_field(name = "Cooldown", value = str(cdJson[0]) + " --> " + str(cdJson[1]) + " turns", inline = False)
+        if "special" in jsonText[str(charNum)]:
+            if type(jsonText[str(charNum)]["special"]) != list:
+                embed.add_field(name = jsonText[str(charNum)]["specialName"], value = jsonText[str(charNum)]["special"], inline = False)
+                cd = requests.get(LINK + "cooldowns.js")
+                cdInfos = cd.text
+                cdData = cdInfos.split("\n")
+                if "null" not in cdData[charNum]:
+                    cdJson = json.loads(cdData[charNum][:-1])
+                    if type(cdJson) == list:
+                        if cdJson[0] != cdJson[1]:
+                            embed.add_field(name = "Cooldown", value = str(cdJson[0]) + " --> " + str(cdJson[1]) + " turns", inline = False)
+                        else:
+                            embed.add_field(name = "Cooldown", value = str(cdJson[0]) + " turns", inline = False)
                     else:
-                        embed.add_field(name = "Cooldown", value = str(cdJson[0]) + " turns", inline = False)
-                else:
-                    embed.add_field(name = "Cooldown", value = str(cdJson) + " turns", inline = False)
-        else:
-            cpt = 1
-            for spe in jsonText[str(charNum)]["special"]:
-                if type(spe["cooldown"]) != int:
-                    embed.add_field(name = jsonText[str(charNum)]["specialName"] + ": Step " + str(cpt), value = spe["description"] + "\nCooldown: " + str(spe["cooldown"][0]) + " --> " + str(spe["cooldown"][1]) + " turns", inline = False)
-                else:
-                    embed.add_field(name = jsonText[str(charNum)]["specialName"] + ": Step " + str(cpt), value = spe["description"] + "\nCooldown: " + str(spe["cooldown"]) + " turns", inline = False)
-                cpt += 1
+                        embed.add_field(name = "Cooldown", value = str(cdJson) + " turns", inline = False)
+            else:
+                cpt = 1
+                for spe in jsonText[str(charNum)]["special"]:
+                    if type(spe["cooldown"]) != int:
+                        embed.add_field(name = jsonText[str(charNum)]["specialName"] + ": Step " + str(cpt), value = spe["description"] + "\nCooldown: " + str(spe["cooldown"][0]) + " --> " + str(spe["cooldown"][1]) + " turns", inline = False)
+                    else:
+                        embed.add_field(name = jsonText[str(charNum)]["specialName"] + ": Step " + str(cpt), value = spe["description"] + "\nCooldown: " + str(spe["cooldown"]) + " turns", inline = False)
+                    cpt += 1
         return embed
 
 
@@ -294,8 +298,10 @@ class Char:
                 await self.bot.say("I waited for too long, I cancel the research!")
             elif num == -1:
                 await self.bot.say("Please type a **correct** number!")
-            else:
+            elif num == -2:
                 await self.bot.say("Please type a **number**!")
+            else:
+                await self.bot.say("There are too much results :grimacing: Please type a more specific word!")
 
 def setup(bot):
     n = Char(bot)
