@@ -178,7 +178,10 @@ class Char:
         #Special
         if "special" in jsonText[str(charNum)]:
             if type(jsonText[str(charNum)]["special"]) != list:
-                embed.add_field(name = jsonText[str(charNum)]["specialName"], value = jsonText[str(charNum)]["special"], inline = False)
+                if "specialName" in jsonText[str(charNum)]:
+                    embed.add_field(name = jsonText[str(charNum)]["specialName"], value = jsonText[str(charNum)]["special"], inline = False)
+                else:
+                    embed.add_field(name = "Special", value = jsonText[str(charNum)]["special"], inline = False)
                 cd = requests.get(LINK + "cooldowns.js")
                 cdInfos = cd.text
                 cdData = cdInfos.split("\n")
@@ -195,12 +198,17 @@ class Char:
                 cpt = 1
                 for spe in jsonText[str(charNum)]["special"]:
                     if type(spe["cooldown"]) != int:
-                        embed.add_field(name = jsonText[str(charNum)]["specialName"] + ": Step " + str(cpt), value = spe["description"] + "\nCooldown: " + str(spe["cooldown"][0]) + " --> " + str(spe["cooldown"][1]) + " turns", inline = False)
+                        if "specialName" in jsonText[str(charNum)]:
+                            embed.add_field(name = jsonText[str(charNum)]["specialName"] + ": Step " + str(cpt), value = spe["description"] + "\nCooldown: " + str(spe["cooldown"][0]) + " --> " + str(spe["cooldown"][1]) + " turns", inline = False)
+                        else:
+                            embed.add_field(name = "Special: Step " + str(cpt), value = spe["description"] + "\nCooldown: " + str(spe["cooldown"][0]) + " --> " + str(spe["cooldown"][1]) + " turns", inline = False)
                     else:
-                        embed.add_field(name = jsonText[str(charNum)]["specialName"] + ": Step " + str(cpt), value = spe["description"] + "\nCooldown: " + str(spe["cooldown"]) + " turns", inline = False)
+                        if "specialName" in jsonText[str(charNum)]:
+                            embed.add_field(name = jsonText[str(charNum)]["specialName"] + ": Step " + str(cpt), value = spe["description"] + "\nCooldown: " + str(spe["cooldown"]) + " turns", inline = False)
+                        else:
+                            embed.add_field(name = "Special: Step " + str(cpt), value = spe["description"] + "\nCooldown: " + str(spe["cooldown"]) + " turns", inline = False)
                     cpt += 1
         return embed
-
 
 
     @commands.command(pass_context=True)
