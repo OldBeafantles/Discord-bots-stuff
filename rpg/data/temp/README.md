@@ -1,0 +1,1 @@
+That's where pictures will be saved before be sent and get deleted!
