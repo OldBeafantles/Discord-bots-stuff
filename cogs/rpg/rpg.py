@@ -1711,7 +1711,7 @@ class Rpg:
 #-----------------------------------------------------------------------------------------------------------#
 
     @commands.command(pass_context=True)
-    async def attrib(self, ctx):
+    async def attrib_mychar(self, ctx):
         """To set your caracteristic points
 
             No arguments needed
