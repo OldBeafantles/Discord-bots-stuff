@@ -1,0 +1,8 @@
+{
+    "AUTHOR" : "Beafantles & Brocolis",
+    "DESCRIPTION" : "A RPG game using Discord \o/",
+    "DISABLED" : false,
+    "SHORT" : "A RPG Game",
+    "NAME" : "rpg",
+    "INSTALL_MSG" : "\nThanks for downloading this cog! \o/\nTo start the game, type [p]create_mychar"
+}
