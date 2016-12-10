@@ -369,8 +369,8 @@ class State:
     def __init__(self, typeState : str, typeValue : str, basicValue : int, coeffValue : float, pourcentage : list, fixed_damage : bool, turns : int, when : str):
 
         self.type = typeState               #str
-        self.type_value = typeValue        #str
-        self.basicValue = basicValue       #int
+        self.type_value = typeValue         #str
+        self.basicValue = basicValue        #int
         self.coeffValue = coeffValue        #float
         self.pourcentage = pourcentage      #list (1st 'section' : boolean / 2nd 'section' : str)
         self.fixed_damage = fixed_damage    #boolean
