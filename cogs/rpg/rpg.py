@@ -9,7 +9,7 @@ import json
 from math import *
 from random import *
 #from PIL import Image, ImageDraw, ImageFont, ImageColor
-from .HUD_Box import *
+from data.rpg.HUD_Box import *
 from PIL import ImageColor #The others needed modules are already imported in HUD_Box
 from io import BytesIO
 import requests
