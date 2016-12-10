@@ -62,7 +62,7 @@
     "4" :
     {
         "name" : "Small protection",
-        "types" : ["DEF boost"],
+        "types" : ["%DEF boost"],
         "nbTargetEn" : 0,
         "nbTargetAl" : 0,
         "cooldown" : 4,
