@@ -1435,7 +1435,7 @@ class Rpg:
 
 
     @commands.command()
-    async def version(self):
+    async def rpg_version(self):
         """Show the version of the RPG module
             
            No arguments needed
@@ -1447,7 +1447,7 @@ class Rpg:
 
     @commands.command(pass_context=True)
     @checks.is_owner()
-    async def ban(self, ctx, user : discord.Member):
+    async def rpg_ban(self, ctx, user : discord.Member):
         """Add a member to the blacklist, so he couldn't use the bot anymore
 
            user : Please mention the Discord user you want to ban
@@ -1472,7 +1472,7 @@ class Rpg:
 
     @commands.command(pass_context=True)
     @checks.is_owner()
-    async def unban(self, ctx, user : discord.Member):
+    async def rpg_unban(self, ctx, user : discord.Member):
         """Remove a member from the blacklist, so he could use the bot again \o/
 
            user : Please mention the Discord user you want to unban
