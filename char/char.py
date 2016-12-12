@@ -6,6 +6,7 @@ import asyncio
 import requests
 import json
 import re
+from .utils.dataIO import dataIO
 
 LINK = "http://optc-db.github.io/common/data/"
 
@@ -31,6 +32,7 @@ class Char:
     def __init__(self, bot):
 
         self.bot = bot
+        self.PMlist = dataIO.load_json("data/rpg/PMonly.json")
 
 
 
@@ -218,10 +220,52 @@ class Char:
                     cpt += 1
         return embed
 
+    @commands.command(pass_context=True)
+    @checks.is_owner()
+    async def add_PMonly(self, ctx):
+        """Add the current channel to the PM only list (to prevent spam)"""
+        self.PMlist = dataIO.load_json("data/rpg/PMonly.json")
+        if ctx.message.channel.id in self.PMlist:
+            await self.bot.say("This channel is already in the list! :wink:")
+        else:
+            self.PMlist.append(ctx.message.channel.id)
+            dataIO.save_json("data/rpg/PMonly.json", self.PMlist)
+            await self.bot.say("Done!")
+            
+
+    @commands.command(pass_context=True)
+    @checks.is_owner()
+    async def rem_PMonly(self, ctx):
+        """Remove the current channel to the PM only list (allow users to spam like hell)"""
+        self.PMlist = dataIO.load_json("data/rpg/PMonly.json")
+        if ctx.message.channel.id not in self.PMlist:
+            await self.bot.say("This channel wasn't even in the list! :wink:")
+        else:
+            self.PMlist.remove(ctx.message.channel.id)
+            dataIO.save_json("data/rpg/PMonly.json", self.PMlist)
+            await self.bot.say("Done!")
+
+
+    @commands.command(pass_context = True)
+    @checks.is_owner()
+    async def list_PMonly(self, ctx):
+        """Get the list of the PM only channels of this server"""
+        self.PMlist = dataIO.load_json("data/rpg/PMonly.json")
+        list_server_IDS = [[a.id,a.name] for a in ctx.message.server.channels]
+        msg = "```css\n"
+        for PMonlyID in list_server_IDS:
+            if PMonlyID[0] in self.PMlist:
+                msg += PMonlyID[1] + "\n"
+        msg += "```"
+        if msg == "```css\n```":
+            await self.bot.say("No channel concerned in this server!")
+        else:
+            await self.bot.say(msg)
+
 
     @commands.command(pass_context=True)
     async def char(self, ctx, *char):
-        """Cherche un personnage tel un bg"""
+        """Search a character in the github database"""
 
         list_chars = []
 
@@ -295,8 +339,6 @@ class Char:
 
 
 
-
-
         data = request2.text.split("\n")
 
         if len(list_results) == 0:
@@ -304,12 +346,20 @@ class Char:
 
         elif len(list_results) == 1:
             embed = self.embed_char(list_results[0], data)
-            await self.bot.send_message(ctx.message.channel, embed = embed)
+            self.PMlist = dataIO.load_json("data/rpg/PMonly.json")
+            if ctx.message.channel.id in self.PMlist:
+                await self.bot.send_message(ctx.message.channel, embed = embed)
+            else:
+                await self.bot.send_message(ctx.message.author, embed = embed)
         else:
             num = await self.choose_char(list_results, data, ctx.message.channel, ctx.message.author)
             if num > 0:
                 embed = self.embed_char(num, data)
-                await self.bot.send_message(ctx.message.channel, embed = embed)
+                self.PMlist = dataIO.load_json("data/rpg/PMonly.json")
+                if ctx.message.channel.id in self.PMlist:
+                    await self.bot.send_message(ctx.message.channel, embed = embed)
+                else:
+                    await self.bot.send_message(ctx.message.author, embed = embed)
             elif num == 0:
                 await self.bot.say("I waited for too long, I cancel the research!")
             elif num == -1:
