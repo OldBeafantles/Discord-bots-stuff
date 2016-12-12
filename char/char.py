@@ -53,8 +53,16 @@ class Char:
         msg += "#Please type the number of the character you want to get infos from!\n```"
 
         if len(msg) <= 2000:
-            await self.bot.send_message(channel, msg)
+            msgToDel = await self.bot.send_message(channel, msg)
             answer = await self.bot.wait_for_message(author = author, channel = channel, timeout = 60)
+            try:
+                await self.bot.delete_message(msgToDel)
+            except Forbidden:
+                await self.bot.send_message(channel, "I don't have permissions to delete a message, it would be proper tho :grimacing:")
+                pass
+            except HTTPException:
+                await self.bot.send_message(channel, "It seems there's some problem with Discord: it's not my fault!")
+                pass
             if answer == None:
                 return 0
             else:
