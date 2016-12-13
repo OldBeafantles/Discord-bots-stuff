@@ -7,6 +7,7 @@ import requests
 import json
 import re
 from .utils.dataIO import dataIO
+from PIL import Image, ImageDraw, ImageFont
 
 LINK = "http://optc-db.github.io/common/data/"
 
