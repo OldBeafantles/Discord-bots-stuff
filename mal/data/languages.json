@@ -9,7 +9,14 @@
         "MOD_PROMOTION" : "Done! Congratulations for the promotion! :clap:",
         "NOT_EVEN_A_MOD" : "This user wasn't even a mod! :grimacing:",
         "MOD_DEMOTION" : "Done! This member was successfully removed from the mods list! :grimacing:",
-        "MAL_USER_NOT_FOUND" : "This MAL user doesn't exist! :grimacing:"
+        "MAL_USER_NOT_FOUND" : "This MAL user doesn't exist! :grimacing:",
+        "LAST ONLINE" : "Last time online: ",
+        "JOINED" : "Joined at: ",
+        "FORUM POSTS" : " forum post(s)",
+        "REVIEWS" : " review(s)",
+        "RECOMMENDATIONS" : " recommendation(s)",
+        "BLOG POSTS" : " blog post(s)",
+        "CLUBS" : " club(s)"
     },
 
     "FRENCH" :
@@ -22,7 +29,14 @@
         "MOD_PROMOTION" : "Fait ! Félicitations pour cette promotion ! :clap:",
         "NOT_EVEN_A_MOD" : "Ce membre n'était même pas un modérateur ! :grimacing:",
         "MOD_DEMOTION" : "Fait ! Ce membre a bien été supprimé de la liste des modérateurs ! :grimacing:",
-        "MAL_USER_NOT_FOUND" : "Cet utilisateur MAL n'existe pas ! :grimacing:"
+        "MAL_USER_NOT_FOUND" : "Cet utilisateur MAL n'existe pas ! :grimacing:",
+        "LAST ONLINE" : "Dernière connexion : ",
+        "JOINED" : "A rejoint le : ",
+        "FORUM POSTS" : " post(s) sur forum",
+        "REVIEWS" : " reviews(s)",
+        "RECOMMENDATIONS" : " recommendation(s)",
+        "BLOG POSTS" : " post(s) sur blog",
+        "CLUBS" : " club(s)"
     }
 
 }

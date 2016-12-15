@@ -5,13 +5,52 @@ import requests
 import asyncio
 import json
 from .utils.dataIO import dataIO
+from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
+import os
+from math import floor
 
 
+#GENERAL SETTINGS
 AVAILABLE_LANGUAGES = ["ENGLISH", "FRENCH"]
 OWNER_ID = dataIO.load_json("data/red/settings.json")["OWNER"]
 LINK = "https://myanimelist.net/profile/"
+DATA = "data/mal/"
+FONT = "exo2medium.ttf"
+IMAGE_WIDTH = 1400
+IMAGE_HEIGHT = 1008
+HIGH_FONT_SIZE = floor(IMAGE_WIDTH / 18)
+MEDIUM_FONT_SIZE = floor(IMAGE_WIDTH / 28)
+LITTLE_FONT_SIZE =floor(IMAGE_WIDTH / 36)
+PICTURE_FORMAT = "png"
+OPENING_METHOD = "RGBA"
 
 
+#MAL PRESENTATION SETTINGS
+
+
+WIDTH_AVATAR = floor(IMAGE_WIDTH / 3.5)
+HEIGHT_AVATAR = floor(IMAGE_WIDTH / 3.5)
+X_AVATAR = floor(IMAGE_WIDTH / 55)
+Y_AVATAR = floor(IMAGE_HEIGHT / 55)
+#----------------------
+X_NAME = WIDTH_AVATAR + X_AVATAR + floor(IMAGE_WIDTH * 0.005)
+Y_NAME = floor(IMAGE_HEIGHT / 7) + Y_AVATAR
+#----------------------
+ALIGNEMENT_X_RIGHT = floor(IMAGE_WIDTH / 1.005)
+Y_LAST_ONLINE = floor(IMAGE_HEIGHT * 0.01)
+ESPACEMENT_Y_RIGHT = floor(0.055 * IMAGE_HEIGHT)
+#----------------------
+#----------------------
+Y_BEGIN_GLOBAL_INFOS = Y_AVATAR + HEIGHT_AVATAR + floor(0.01 * IMAGE_HEIGHT)
+GLOBAL_INFOS_ESPACEMENT = floor(IMAGE_HEIGHT / 22)
+ALIGNEMENT_X_GLOBAL_INFOS = floor(WIDTH_AVATAR / 2) + X_AVATAR
+#----------------------
+#----------------------
+WIDTH_GENDER = floor(IMAGE_WIDTH / 15)
+HEIGHT_GENDER = floor(IMAGE_HEIGHT / 15)
+X_GENDER = floor((X_AVATAR + WIDTH_AVATAR) / 2) - floor(WIDTH_GENDER / 2) 
+#----------------------
 
 def initialized(channelID : str):
     
@@ -569,6 +608,152 @@ def get_MAL_infos(data : str):
     return dataDict
 
 
+
+
+
+
+
+
+def create_MAL_presentation(data : dict, color : tuple, memberID : str, language : str):
+
+    result_page = Image.open(DATA + "fond.png")
+    fnt_high = ImageFont.truetype(DATA + FONT, HIGH_FONT_SIZE)
+    fnt_medium = ImageFont.truetype(DATA + FONT, MEDIUM_FONT_SIZE)
+    fnt_little = ImageFont.truetype(DATA + FONT, LITTLE_FONT_SIZE)
+
+    members_settings = dataIO.load_json("data/mal/members_settings.json") #We load the settings of the members
+    languages = dataIO.load_json("data/mal/languages.json")
+
+    if memberID in members_settings and "FONT_COLOR" in members_settings[memberID]:
+        color[0] = members_settings[memberID]["FONT_COLOR"][0]
+        color[1] = members_settings[memberID]["FONT_COLOR"][1]
+        color[2] = members_settings[memberID]["FONT_COLOR"][2]
+
+    sizeGlobalInfos = Y_BEGIN_GLOBAL_INFOS
+
+    d = ImageDraw.Draw(result_page)
+
+    #AVATAR
+    #---------------------------
+
+    if data["avatar"] != "DEFAULT_AVATAR":
+        avatarReq = requests.get(data["avatar"])
+        avatar = Image.open(BytesIO(avatarReq.content))
+    else:
+        avatar = Image.open(DATA + "default_avatar.png")
+
+    avatar = avatar.resize(size=(WIDTH_AVATAR,HEIGHT_AVATAR))
+    result_page.paste(avatar,(X_AVATAR,Y_AVATAR))
+
+    #NAME
+    #---------------------------
+
+    d.text((X_NAME,Y_NAME), data["name"], font=fnt_high, fill=(color[0],color[1],color[2],255))
+
+    #LAST ONLINE
+    #---------------------------
+
+    d.text((ALIGNEMENT_X_RIGHT - fnt_medium.getsize(languages[language]["LAST ONLINE"] + data["last online"])[0],Y_LAST_ONLINE), languages[language]["LAST ONLINE"] + data["last online"], font=fnt_medium, fill=(color[0],color[1],color[2],255))
+
+    #GENDER
+    #---------------------------
+
+    if data["gender"] == "Male":
+        gender = Image.open(DATA + "boy.png").convert(OPENING_METHOD)
+
+    elif data["gender"] == "Female":
+        gender = Image.open(DATA + "girl.png").convert(OPENING_METHOD)
+
+    elif data["gender"] == "Non-Binary":
+        gender = Image.open(DATA + "trap.png").convert(OPENING_METHOD)
+
+    if data["gender"] != "UNKNOWN":
+        gender = gender.resize(size=(WIDTH_GENDER,HEIGHT_GENDER))
+        result_page.paste(gender,(X_GENDER,sizeGlobalInfos), mask = gender)
+
+        sizeGlobalInfos += HEIGHT_GENDER
+
+    #BIRTHDAY
+    #---------------------------
+
+    if data["birthday"] != "UNKNOWN":
+
+        d.text((ALIGNEMENT_X_GLOBAL_INFOS - floor(fnt_little.getsize(data["birthday"])[0] / 2),sizeGlobalInfos), data["birthday"], font=fnt_little, fill=(color[0],color[1],color[2],255))
+
+        sizeGlobalInfos += GLOBAL_INFOS_ESPACEMENT
+
+
+    #LOCATION
+    #---------------------------
+
+    if data["location"] != "UNKNOWN":
+
+        d.text((ALIGNEMENT_X_GLOBAL_INFOS - floor(fnt_little.getsize(data["location"])[0] / 2),sizeGlobalInfos), data["location"], font=fnt_little, fill=(color[0],color[1],color[2],255))
+        
+        sizeGlobalInfos += GLOBAL_INFOS_ESPACEMENT
+
+
+    #JOINED
+    #---------------------------
+
+    d.text((ALIGNEMENT_X_RIGHT - fnt_medium.getsize(languages[language]["JOINED"] + data["joined"])[0],Y_LAST_ONLINE + ESPACEMENT_Y_RIGHT), languages[language]["JOINED"] + data["joined"], font=fnt_medium, fill=(color[0],color[1],color[2],255))
+
+
+    #FORUM POSTS
+    #---------------------------
+
+    d.text((ALIGNEMENT_X_GLOBAL_INFOS - floor(fnt_little.getsize(data["forum posts"] + languages[language]["FORUM POSTS"])[0] / 2),sizeGlobalInfos), data["forum posts"] + languages[language]["FORUM POSTS"], font=fnt_little, fill=(color[0],color[1],color[2],255))
+    
+    sizeGlobalInfos += GLOBAL_INFOS_ESPACEMENT
+
+    #REVIEWS
+    #---------------------------
+
+    d.text((ALIGNEMENT_X_GLOBAL_INFOS - floor(fnt_little.getsize(data["reviews"] + languages[language]["REVIEWS"])[0] / 2),sizeGlobalInfos), data["reviews"] + languages[language]["REVIEWS"], font=fnt_little, fill=(color[0],color[1],color[2],255))
+
+    sizeGlobalInfos += GLOBAL_INFOS_ESPACEMENT
+
+    #RECOMMENDATIONS
+    #---------------------------
+
+    d.text((ALIGNEMENT_X_GLOBAL_INFOS - floor(fnt_little.getsize(data["recommendations"] + languages[language]["RECOMMENDATIONS"])[0] / 2),sizeGlobalInfos), data["recommendations"] + languages[language]["RECOMMENDATIONS"], font=fnt_little, fill=(color[0],color[1],color[2],255))
+
+    sizeGlobalInfos += GLOBAL_INFOS_ESPACEMENT
+
+    #BLOG POSTS
+    #---------------------------
+
+    d.text((ALIGNEMENT_X_GLOBAL_INFOS - floor(fnt_little.getsize(data["blog posts"] + languages[language]["BLOG POSTS"])[0] / 2),sizeGlobalInfos), data["blog posts"] + languages[language]["BLOG POSTS"], font=fnt_little, fill=(color[0],color[1],color[2],255))
+
+    sizeGlobalInfos += GLOBAL_INFOS_ESPACEMENT
+
+
+    #CLLUBS
+    #---------------------------
+
+    d.text((ALIGNEMENT_X_GLOBAL_INFOS - floor(fnt_little.getsize(data["clubs"] + languages[language]["CLUBS"])[0] / 2),sizeGlobalInfos), data["clubs"] + languages[language]["CLUBS"], font=fnt_little, fill=(color[0],color[1],color[2],255))
+
+    sizeGlobalInfos += GLOBAL_INFOS_ESPACEMENT
+
+
+
+
+    d = ImageDraw.Draw(result_page)
+
+    return result_page
+
+
+
+async def send_image(bot, channel : discord.Channel, memberName : str, memberDiscriminator : str, date : str, image):
+
+    link_to_picture = DATA + "temp/" + memberName + "#" + memberDiscriminator + "_" + date + "." + PICTURE_FORMAT
+    image.save(link_to_picture, "PNG", quality = 100)
+
+    await bot.send_file(channel, link_to_picture)
+
+    os.remove(link_to_picture)
+
+
 class Mal:
 
     def __init__(self, bot):
@@ -720,7 +905,7 @@ class Mal:
 
         if name == "":
 
-            print("todo")
+            print("TODO")
 
         else:
 
@@ -729,8 +914,15 @@ class Mal:
             if r.status_code != 404:
 
                 data = get_MAL_infos(r.text)
-                
-
+                await self.bot.say('```python\n' + str(data) + "```")
+                color = (ctx.message.author.color.r,ctx.message.author.color.g,ctx.message.author.color.b)
+                self.settings = dataIO.load_json("data/mal/settings.json")
+                language = self.settings[ctx.message.server.id]["LANGUAGE"]
+                try:
+                    image = create_MAL_presentation(data, color, ctx.message.author.id, language)
+                    await send_image(self.bot, ctx.message.channel, ctx.message.author.name, ctx.message.author.discriminator, str(ctx.message.timestamp)[:-7], image)
+                except Exception as e:
+                    await self.bot.say(e)
             else:
 
                 await self.bot.say(self.languages[self.settings[ctx.message.server.id]["LANGUAGE"]]["MAL_USER_NOT_FOUND"])
