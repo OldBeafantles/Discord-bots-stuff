@@ -8,7 +8,7 @@ from .utils.dataIO import dataIO
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 import os
-from math import floor
+from math import floor, ceil, sin, cos, pi
 
 
 #GENERAL SETTINGS
@@ -17,18 +17,17 @@ OWNER_ID = dataIO.load_json("data/red/settings.json")["OWNER"]
 LINK = "https://myanimelist.net/profile/"
 DATA = "data/mal/"
 FONT = "exo2medium.ttf"
-IMAGE_WIDTH = 1400
-IMAGE_HEIGHT = 1008
-HIGH_FONT_SIZE = floor(IMAGE_WIDTH / 18)
-MEDIUM_FONT_SIZE = floor(IMAGE_WIDTH / 28)
-LITTLE_FONT_SIZE =floor(IMAGE_WIDTH / 36)
 PICTURE_FORMAT = "png"
 OPENING_METHOD = "RGBA"
 
 
 #MAL PRESENTATION SETTINGS
 
-
+IMAGE_WIDTH = 1400
+IMAGE_HEIGHT = 1008
+HIGH_FONT_SIZE = floor(IMAGE_WIDTH / 18)
+MEDIUM_FONT_SIZE = floor(IMAGE_WIDTH / 28)
+LITTLE_FONT_SIZE =floor(IMAGE_WIDTH / 36)
 WIDTH_AVATAR = floor(IMAGE_WIDTH / 3.5)
 HEIGHT_AVATAR = floor(IMAGE_WIDTH / 3.5)
 X_AVATAR = floor(IMAGE_WIDTH / 55)
@@ -609,11 +608,6 @@ def get_MAL_infos(data : str):
 
 
 
-
-
-
-
-
 def create_MAL_presentation(data : dict, color : tuple, memberID : str, language : str):
 
     result_page = Image.open(DATA + "fond.png")
@@ -738,6 +732,14 @@ def create_MAL_presentation(data : dict, color : tuple, memberID : str, language
 
 
 
+    #--------------------------#
+    #        ANIME STATS       #
+    #--------------------------#
+
+    CamAnime = Camembert(3.5, (0.0,0.0))
+    CamAnime.addPart((255,255,255), 0.25)
+
+
     d = ImageDraw.Draw(result_page)
 
     return result_page
@@ -752,6 +754,33 @@ async def send_image(bot, channel : discord.Channel, memberName : str, memberDis
     await bot.send_file(channel, link_to_picture)
 
     os.remove(link_to_picture)
+
+
+
+class Camembert:
+
+    def __init__(self, radius : float, center : tuple):
+
+        self.radius = radius
+        self.center = center
+        self.last_angle = 0.0
+        self.pourcentage = 0.0
+        self.image = Image.new("RGB", (ceil(self.radius * 2), ceil(self.radius * 2)), (255,255,255))
+        self.draw = ImageDraw.Draw(self.image)
+
+
+    def addPart(self, color : tuple, pourcentage : float):
+        #Pourcentage must be 0.25, not 25 (for 25%)
+
+        newAngle = self.last_angle + pourcentage * 2 * pi
+
+        point = (round(cos(newAngle) * self.radius, 1), round(sin(newAngle) * self.radius, 1))
+
+        self.draw.line((self.center[0], self.center[1], point[0], point[1]), fill = 255)
+
+        self.last_angle = newAngle
+
+
 
 
 class Mal:
