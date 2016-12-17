@@ -7,8 +7,17 @@ import requests
 import json
 import re
 from .utils.dataIO import dataIO
+from PIL import Image, ImageDraw, ImageFont
+import os
+from io import BytesIO
 
 LINK = "http://optc-db.github.io/common/data/"
+LINK_PICTURE = "http://onepiece-treasurecruise.com/wp-content/uploads/f"
+VERTICAL_ESPACEMENT = 15
+HORIZONTAL_ESPACEMENT = 110
+HORIZONTAL_BASE = 25
+HORIZONTAL_BASE_PCITURE = 45
+VERTICAL_BASE = 130
 
 def virgule(number : int):
     #Convert an int into a proper str (3000000 --> '3,000,000')
@@ -26,6 +35,48 @@ def virgule(number : int):
     return resultat
 
 
+def build_image(list_IDS : list, totalResults : int):
+
+    result_page = Image.open("data/char/results.png")
+    fnt = ImageFont.truetype("data/char/Minimoon.ttf", 45)
+    fnt_medium = ImageFont.truetype("data/char/Minimoon.ttf", 30)
+
+    d = ImageDraw.Draw(result_page)
+
+<<<<<<< HEAD
+        self.bot = bot
+        self.PMlist = dataIO.load_json("data/char/PMonly.json")
+=======
+    d.text((100,17), str(totalResults), font=fnt, fill=(255,255,255,255))
+>>>>>>> 3edc8f68d75e1a039213f75b53fd2f27aabba258
+
+    for i in range(0,len(list_IDS)):
+        if os.path.exists("data/char/faces/" + str(list_IDS[i]) + ".png") == False:
+            imageReq = requests.get(LINK_PICTURE + (4 - len(str(list_IDS[i]))) * "0" + str(list_IDS[i]) + ".png")
+            image = Image.open(BytesIO(imageReq.content))
+        else:
+            image = Image.open("data/char/faces/" + str(list_IDS[i]) + ".png")
+        image = image.resize(size=(45,45))
+        if i%5 == 0:
+            d.text((HORIZONTAL_BASE,VERTICAL_BASE + i * VERTICAL_ESPACEMENT), str(i + 1), font=fnt_medium, fill=(255,255,255,255))
+            result_page.paste(image,(HORIZONTAL_BASE + HORIZONTAL_BASE_PCITURE, VERTICAL_BASE + i*VERTICAL_ESPACEMENT))
+        elif i%5 == 1:
+            d.text((HORIZONTAL_BASE + HORIZONTAL_ESPACEMENT,VERTICAL_BASE + (i - 1) * VERTICAL_ESPACEMENT), str(i + 1), font=fnt_medium, fill=(255,255,255,255))
+            result_page.paste(image,(HORIZONTAL_BASE + HORIZONTAL_BASE_PCITURE + HORIZONTAL_ESPACEMENT, VERTICAL_BASE + (i - 1)*VERTICAL_ESPACEMENT))
+        elif i%5 == 2:
+            d.text((HORIZONTAL_BASE + 2 * HORIZONTAL_ESPACEMENT,VERTICAL_BASE + (i - 2) * VERTICAL_ESPACEMENT), str(i + 1), font=fnt_medium, fill=(255,255,255,255))
+            result_page.paste(image,(HORIZONTAL_BASE + HORIZONTAL_BASE_PCITURE + 2 * HORIZONTAL_ESPACEMENT, VERTICAL_BASE + (i - 2)*VERTICAL_ESPACEMENT))
+        elif i%5 == 3:
+            d.text((HORIZONTAL_BASE + 3 * HORIZONTAL_ESPACEMENT,VERTICAL_BASE + (i - 3) * VERTICAL_ESPACEMENT), str(i + 1), font=fnt_medium, fill=(255,255,255,255))
+            result_page.paste(image,(HORIZONTAL_BASE + HORIZONTAL_BASE_PCITURE + 3 * HORIZONTAL_ESPACEMENT, VERTICAL_BASE + (i - 3)*VERTICAL_ESPACEMENT))
+        else:
+            d.text((HORIZONTAL_BASE + 4 * HORIZONTAL_ESPACEMENT,VERTICAL_BASE + (i - 4) * VERTICAL_ESPACEMENT), str(i + 1), font=fnt_medium, fill=(255,255,255,255))
+            result_page.paste(image,(HORIZONTAL_BASE + HORIZONTAL_BASE_PCITURE + 4 * HORIZONTAL_ESPACEMENT, VERTICAL_BASE + (i - 4)*VERTICAL_ESPACEMENT))
+
+    d = ImageDraw.Draw(result_page)
+
+    result_page.save("data/char/temp.png", "PNG", quality=100)
+
 
 class Char:
 
@@ -39,45 +90,30 @@ class Char:
 
     async def choose_char(self, listNum : list, data : list, channel : discord.Channel, author : discord.Member):
         #Get the ID of a character basing on the a list of IDs
+        build_image(listNum[:30],len(listNum))
+        msgToDel = await self.bot.send_file(channel, "data/char/temp.png")
+        os.remove("data/char/temp.png")
+        answer = await self.bot.wait_for_message(author = author, channel = channel, timeout = 60)
 
-        msg = "```Markdown\n" + str(len(listNum)) + " results found!\n======================\n\n"
-
-        nb = 0
-
-        text = []
-
-
-        for i in range(0, len(listNum)):
-            text.append(json.loads(data[listNum[i]][:-1]))
-            msg += "[" + str(i + 1) + "][" + text[i][0] + "][" + text[i][1] + "]\n"
-            nb += 1
-
-        msg += "#Please type the number of the character you want to get infos from!\n```"
-
-        if len(msg) <= 2000:
-            msgToDel = await self.bot.send_message(channel, msg)
-            answer = await self.bot.wait_for_message(author = author, channel = channel, timeout = 60)
-            try:
-                await self.bot.delete_message(msgToDel)
-            except Forbidden:
-                await self.bot.send_message(channel, "I don't have permissions to delete a message, it would be proper tho :grimacing:")
-                pass
-            except HTTPException:
-                await self.bot.send_message(channel, "It seems there's some problem with Discord: it's not my fault!")
-                pass
-            if answer == None:
-                return 0
-            else:
-                try:
-                    number = int(answer.content)
-                    if number > 0 and number < len(text) + 1:
-                        return listNum[number - 1]
-                    else:
-                        return -1
-                except ValueError:
-                    return -2
+        try:
+            await self.bot.delete_message(msgToDel)
+        except Forbidden:
+            await self.bot.send_message(channel, "I don't have permissions to delete a message, it would be proper tho :grimacing:")
+            pass
+        except HTTPException:
+            await self.bot.send_message(channel, "It seems there's some problem with Discord: it's not my fault!")
+            pass
+        if answer == None:
+            return 0
         else:
-            return -3
+            try:
+                number = int(answer.content)
+                if number > 0 and number < len(listNum) + 1:
+                    return listNum[number - 1]
+                else:
+                    return -1
+            except ValueError:
+                return -2
 
 
 
@@ -364,10 +400,39 @@ class Char:
                 await self.bot.say("I waited for too long, I cancel the research!")
             elif num == -1:
                 await self.bot.say("Please type a **correct** number!")
-            elif num == -2:
-                await self.bot.say("Please type a **number**!")
             else:
-                await self.bot.say("There are too much results :grimacing: Please type a more specific word!")
+                await self.bot.say("Please type a **number**!")
+
+
+    @commands.command(pass_context=True)
+    @checks.is_owner()
+    async def update_DB(self, ctx, number1 : int, number2 : int):
+        """Update the database"""
+        list_errors = []
+        list_news = []
+        if number2 > number1:
+            for i in range(number1,number2 + 1):
+                if os.path.exists("data/char/faces/" + str(i) + ".png") == False:
+                    imageReq = requests.get(LINK_PICTURE + (4 - len(str(i))) * "0" + str(i) + ".png")
+                    if imageReq.status_code != 404:
+                        image = Image.open(BytesIO(imageReq.content))
+                        image = image.save("data/char/faces/" + str(i) + ".png")
+                        list_news.append(i)
+                    else:
+                        list_errors.append(i)
+            msg = "Done!\n`"
+            msg += str(len(list_news)) + " new files dowloaded!\n"
+            msg += str((number2 - number1) - len(list_news) + 1) + " files were already saved!"
+            if len(list_errors) != 0:
+                msg += "There are " + str(len(list_errors)) + " errors:\n\n"
+                for error in list_errors:
+                    msg += str(error) + "\n"
+                msg += "\n\nThis is very important to download MANUALLY the characters' faces of the ID above and put them to the folder /data/char/faces (check the syntax to name the picture correctly)!!!\n\nIf you don't understand what I am saying, please contact Beafantles#8917!"
+            msg += "`"
+            await self.bot.say(msg)
+        else:
+            await self.bot.say("The second number must be higher than the first one! :grimacing:")
+
 
 def setup(bot):
     n = Char(bot)
