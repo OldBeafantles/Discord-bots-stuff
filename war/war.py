@@ -24,6 +24,47 @@ import datetime
 
 
 
+class Boss:
+
+    def __init__(self, name : str, data : dict):
+
+        self.name = name
+        self.HP = data["HP"]
+        self.presentation = data["presentation"]
+        self.spellNames = []
+        self.spellDamages = []
+
+        for i in range (1,7):
+            self.spellNames.append(data["sort " + str(i) + " nom"])
+            self.spellDamages.append(data["sort " + str(i) + " degats"])
+
+
+class Character:
+
+    def __init__(self, name : str, nameChar : str, data : dict):
+
+        self.name = name
+        self.HP = 100
+        self.nameChar = nameChar
+        self.spellNames = []
+        self.spellDamages = []
+
+        self.presentation = data[self.nameChar + " presentation"]
+
+        for i in range(1,7):
+            self.spellNames.append(data[self.nameChar + "sort " + str(i) + " nom"])
+            self.spellDamages.append(data[self.nameChar + "sort " + str(i) + " degats"])
+
+
+
+class Team:
+
+    def __init__(self, data : list):
+
+        self.listChars = data
+
+
+
 class War:
 
     def __init__(self, bot):
@@ -286,12 +327,12 @@ class War:
             if infos[0] not in self.bosses:
                 try:
                     infos[2] = int(infos[2])
-                    infos[3] = int(infos[3])
-                    infos[5] = int(infos[5])
-                    infos[7] = int(infos[7])
-                    infos[9] = int(infos[9])
-                    infos[11] = int(infos[11])
-                    infos[13] = int(infos[13])
+                    infos[4] = int(infos[4])
+                    infos[6] = int(infos[6])
+                    infos[8] = int(infos[8])
+                    infos[10] = int(infos[10])
+                    infos[12] = int(infos[12])
+                    infos[14] = int(infos[14])
                     self.bosses[infos[0]] = {}
                     self.bosses[infos[0]]["presentation"] = infos[1]
                     self.bosses[infos[0]]["HP"] = infos[2]
@@ -343,11 +384,12 @@ class War:
         self.bosses = dataIO.load_json("data/war/bosses.json")
         boss = " ".join(boss).title()
         if boss in self.bosses:
-            await self.bot.say("Here's the boss stats: **" + boss + "**\n" + self.bosses[boss]["presentation"])
+            await self.bot.say("Here's the boss stats:\n **" + boss + "**\n" + self.bosses[boss]["presentation"])
         elif boss.isdigit():
             choix = int(boss)
             if choix <= len(self.bosses) and choix > 0:
-                await self.bot.say("Here's the character stats: **"+ self.bosses[choix-1] + "** \n" + self.bosses[choix - 1]["presentation"])
+                temp = [k for k in self.bosses.keys()]
+                await self.bot.say("Here's the character stats:\n **" + temp[choix-1] + "** \n" + self.bosses[temp[choix-1]]["presentation"])
             else:
                 await self.bot.say("This number isn't correct! :grimacing:")
         else:
