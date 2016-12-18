@@ -124,6 +124,26 @@ class Team:
         return self.leader.is_dead() and len(self.listChars) == 0
 
 
+class BossTeam:
+
+    def __init__(self, data : list):
+
+        self.listBosses = data
+
+
+    def get_total_HP(self):
+
+        HP = 0
+        for boss in self.listBosses:
+            HP += boss.HP
+        return HP
+
+
+    def has_lost(self):
+
+        return self.get_total_HP() == 0
+
+
 class War:
 
     def __init__(self, bot):
@@ -159,7 +179,7 @@ class War:
                 return server
 
 
-    def getBossFightMessage(self, team : Team, boss : Boss):
+    def getBossFightMessage(self, team : Team, bosses : BossTeam):
 
         msg = FIGHT_BOSS_MESSAGE
         msg += team.leader.name + "'s team:\n===========================================\n"
@@ -168,11 +188,13 @@ class War:
             nbMembers +=1
         msg += "<" + str(len(team.listChars) + nbMembers) + " member(s) alive>\n"
         msg += "<" + str(team.get_total_HP()) + " HP remaining>\n\n"
-        msg += boss.name + "\n===========================================\n"
-        msg += "<" + str(boss.HP) + " HP remaining>\n\n\n"
+        msg += "BOSS TEAM\n===========================================\n"
+        for boss in bosses.listBosses:
+            msg += "<" + boss.name + ": " + str(boss.HP) + " HP remaining >\n"
+        msg += "\n\n"
         return msg
 
-    def getBossFightResults(self, team : Team, boss : Boss, winner : bool):
+    def getBossFightResults(self, team : Team, bosses : BossTeam, winner : bool):
 
         msg = FIGHT_BOSS_RESULTS_MESSAGE
         if winner:
@@ -184,7 +206,7 @@ class War:
             msg += "#" + str(len(team.listChars) + nbMembers) + " member(s) survived with a total of " + str(team.get_total_HP()) + " HP\n"
         else:
             msg += "<    " + team.leader.name + "'s team lost! >\n\n"
-            msg += "#" + boss.name + " survived with " + str(boss.HP) + " HP!"
+            msg += "#" + bosses.listBosses[0].name + "'s team' survived with " + str(bosses.get_total_HP()) + " HP!"
         msg += "```"
         return msg
 
@@ -221,6 +243,7 @@ class War:
                         await self.bot.delete_message(message0)
                     elif choix1>0 and choix1<len(self.list_persos)+1:
                         await self.bot.say("Here's your character : **"+ self.list_persos[choix1-1] + "** \n" + self.persos[self.list_persos[choix1-1] + " presentation"] + "\n")
+                        await self.bot.delete_message(message0)
                         self.teams[user.id] = {'leader' : user.id, 'leader choice' : self.list_persos[choix1 - 1], 'members' : [], 'members choices' : {}}
                         dataIO.save_json("data/war/teams.json", self.teams)
                         await self.bot.say("Done!")
@@ -367,6 +390,7 @@ class War:
                             await self.bot.delete_message(message0)
                         elif choix1>0 and choix1<len(self.list_persos)+1:
                             await self.bot.say("Here's your character : **"+ self.list_persos[choix1-1] + "** \n" + self.persos[self.list_persos[choix1-1] + " presentation"] + "\n")
+                            await self.bot.delete_message(message0)
                             self.teams[ctx.message.author.id]['members'].append(user.id)
                             self.teams[ctx.message.author.id]['members choices'][user.id] = self.list_persos[choix1-1]
                             dataIO.save_json("data/war/teams.json", self.teams)
@@ -404,25 +428,91 @@ class War:
         """Leaves your team"""
 
         self.teams = dataIO.load_json("data/war/teams.json")
-        try:
-            if ctx.message.author.id in self.teams:
-                del self.teams[ctx.message.author.id]
-                dataIO.save_json("data/war/teams.json", self.teams)
-                await self.bot.say("You deleted your team and all the members!")
+
+        if ctx.message.author.id in self.teams:
+            del self.teams[ctx.message.author.id]
+            dataIO.save_json("data/war/teams.json", self.teams)
+            await self.bot.say("You deleted your team and all the members!")
+        else:
+            found = False
+            for team in self.teams:
+                if ctx.message.author.id in self.teams[team]['members']:
+                    found = True
+                    self.teams[team]['members'].remove(ctx.message.author.id)
+                    del self.teams[team]['members choices'][ctx.message.author.id]
+                    dataIO.save_json("data/war/teams.json", self.teams)
+                    await self.bot.say("Done!")
+                    break
+            if not found:
+                await self.bot.say("You don't belong to any team! :grimacing:")
+
+    @commands.command(pass_context=True)
+    async def change_char(self, ctx):
+        """Changes your character"""
+
+        self.teams = dataIO.load_json("data/war/teams.json")
+
+        if ctx.message.author.id in self.teams:
+            persos = "<@" + ctx.message.author.id + ">, please choose your new character between the following ones. Otherwise, just type `cancel`:\n\n"
+            for x in range(0, len(self.list_persos)):
+                persos += str(x+1) + ") " + self.list_persos[x] + "\n"
+            message0 = await self.bot.say(persos)
+            answer = await self.bot.wait_for_message(timeout=60,author=ctx.message.author,channel=ctx.message.channel)
+            if answer == None:
+                await self.bot.say("I don't want to wait anymore, I cancel that! :grimacing:")
+                await self.bot.delete_message(message0)
             else:
-                found = False
-                for team in self.teams:
-                    if ctx.message.author.id in self.teams[team]['members']:
-                        found = True
-                        self.teams[team]['members'].remove(ctx.message.author.id)
-                        del self.teams[team]['members choices'][ctx.message.author.id]
-                        dataIO.save_json("data/war/teams.json", self.teams)
-                        await self.bot.say("Done!")
-                        break
-                if not found:
-                    await self.bot.say("You don't belong to any team! :grimacing:")
-        except Exception as e:
-            await self.bot.say(e)
+                try:
+                    choix1 = int(answer.content)
+                except ValueError:
+                    if choix1.content != "cancel":
+                        await self.bot.say("That's not a **number**, I cancel that! :grimacing:")
+                    else:
+                        await self.bot.say("Cancelled! :grimacing:")
+                    await self.bot.delete_message(message0)
+                if choix1<1 or choix1>len(self.list_persos):
+                    await self.bot.say("That's not a **correct number**, I cancel that! :grimacing:")
+                    await self.bot.delete_message(message0)
+                elif choix1>0 and choix1<len(self.list_persos)+1:
+                    await self.bot.say("Here's your new character : **"+ self.list_persos[choix1-1] + "** \n" + self.persos[self.list_persos[choix1-1] + " presentation"] + "\n")
+                    await self.bot.delete_message(message0)
+                    self.teams[ctx.message.author.id]['leader choice'] = self.list_persos[choix1-1]
+                    dataIO.save_json("data/war/teams.json", self.teams)
+                    await self.bot.say("Done!")
+        else:
+            found = False
+            for team in self.teams:
+                if ctx.message.author.id in self.teams[team]['members']:
+                    found = True
+                    persos = "<@" + ctx.message.author.id + ">, please choose your new character between the following ones. Otherwise, just type `cancel`:\n\n"
+                    for x in range(0, len(self.list_persos)):
+                        persos += str(x+1) + ") " + self.list_persos[x] + "\n"
+                    message0 = await self.bot.say(persos)
+                    answer = await self.bot.wait_for_message(timeout=60,author=ctx.message.author,channel=ctx.message.channel)
+                    if answer == None:
+                        await self.bot.say("I don't want to wait anymore, I cancel that! :grimacing:")
+                        await self.bot.delete_message(message0)
+                    else:
+                        try:
+                            choix1 = int(answer.content)
+                        except ValueError:
+                            if choix1.content != "cancel":
+                                await self.bot.say("That's not a **number**, I cancel that! :grimacing:")
+                            else:
+                                await self.bot.say("Cancelled! :grimacing:")
+                            await self.bot.delete_message(message0)
+                        if choix1<1 or choix1>len(self.list_persos):
+                            await self.bot.say("That's not a **correct number**, I cancel that! :grimacing:")
+                            await self.bot.delete_message(message0)
+                        elif choix1>0 and choix1<len(self.list_persos)+1:
+                            await self.bot.say("Here's your new character : **"+ self.list_persos[choix1-1] + "** \n" + self.persos[self.list_persos[choix1-1] + " presentation"] + "\n")
+                            await self.bot.delete_message(message0)
+                            self.teams[team]['members choices'][ctx.message.author.id] = self.list_persos[choix1-1]
+                            dataIO.save_json("data/war/teams.json", self.teams)
+                            await self.bot.say("Done!")
+                    break
+            if not found:
+                await self.bot.say("You don't belong to any team! :grimacing:")
 
     @commands.command(pass_context=True)
     @checks.is_owner()
@@ -564,155 +654,198 @@ class War:
     @commands.command(pass_context=True)
     @checks.is_owner()
     async def fight_boss(self, ctx, user : discord.Member, *boss):
-        """Starts a fight between a team (using the leader member) and a boss (using his name)"""
+        """Starts a fight between a team (using the leader member) and multiple bosses (using their names --> Boss 1#Boss 2#Boss 3)"""
 
-        self.teams = dataIO.load_json("data/war/teams.json")
+        try:
+            self.teams = dataIO.load_json("data/war/teams.json")
 
-        if user.id in self.teams:
-            self.bosses = dataIO.load_json("data/war/bosses.json")
-            bossName = " ".join(boss)
-            if bossName in self.bosses:
-                leader = Character(user.name, self.teams[user.id]['leader choice'], dataIO.load_json("data/war/Persos.json"))
-                members = []
-                for member in self.teams[user.id]['members']:
-                    Tmember = self.getMember(member)
-                    if Tmember:
-                        members.append(Character(Tmember.name, self.teams[user.id]['members choices'][Tmember.id], dataIO.load_json("data/war/Persos.json")))
-                team = Team(members, leader)
-                boss = Boss(bossName, self.bosses[bossName])
+            if user.id in self.teams:
+                self.bosses = dataIO.load_json("data/war/bosses.json")
+                bossName = " ".join(boss)
+                bosses = bossName.split("#")
+                check = True
+                for boss in bosses:
+                    if boss not in self.bosses:
+                        check = False
+                        break
+                if check:
+                    leader = Character(user.name, self.teams[user.id]['leader choice'], dataIO.load_json("data/war/Persos.json"))
+                    members = []
+                    for member in self.teams[user.id]['members']:
+                        Tmember = self.getMember(member)
+                        if Tmember:
+                            members.append(Character(Tmember.name, self.teams[user.id]['members choices'][Tmember.id], dataIO.load_json("data/war/Persos.json")))
+                    team = Team(members, leader)
+                    bossesTeam = []
+                    for boss in bosses:
+                        bossesTeam.append(Boss(boss, self.bosses[boss]))
+                    bosses = BossTeam(bossesTeam)
 
-                #HERE WE GO BABY
-                check = False
-                message = await self.bot.say("HERE WE GO!")
-                while not check:
-                    dé1 = randint(1, 6)
-                    dé2 = randint(1, 6)
-                    data = FIGHT_BEGINNING_MESSAGE
-                    data += "#" + user.name +"#" + user.discriminator + " rolls the dice and gets a "  + str(dé1) + "!"
-                    data += "```"
-                    message = await self.bot.edit_message(message,data)
-                    await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=WAITING_TIME)
-                    data = FIGHT_BEGINNING_MESSAGE
-                    data += "#" + boss.name +" rolls the dice and gets a "  + str(dé2) + "!"
-                    data += "```"
-                    message = await self.bot.edit_message(message,data)
-                    await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=WAITING_TIME)
-                    if dé1!=dé2:
-                        if dé1 > dé2:
-                            first = team
-                            second = boss
-                        else:
-                            first = boss
-                            second = team
-                        check = True
+                    #HERE WE GO BABY
+                    check = False
+                    message = await self.bot.say("HERE WE GO!")
+                    while not check:
+                        dé1 = randint(1, 6)
+                        dé2 = randint(1, 6)
+                        data = FIGHT_BEGINNING_MESSAGE
+                        data += "#" + user.name +"#" + user.discriminator + " rolls the dice and gets a "  + str(dé1) + "!"
+                        data += "```"
+                        message = await self.bot.edit_message(message,data)
                         await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=WAITING_TIME)
-                if type(first) == Team:
-                    await self.bot.edit_message(message, FIGHT_BEGINNING_MESSAGE + "#So it's " + first.leader.name + "'s team who will begin!```")
-                else:
-                    await self.bot.edit_message(message, FIGHT_BEGINNING_MESSAGE + "#So it's " + first.name + " who will begin!```")
-                await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=WAITING_TIME)
-                while not team.has_lost() and not boss.is_dead():
-                    
-
-                    if type(first) == Team:
-                        msg = ""
-                        dice = randint(1,6)
-                        spellUsedName = team.leader.spellNames[dice - 1]
-                        spellUsedDamages = team.leader.spellDamages[dice - 1]
-                        msg += "#" + team.leader.name + " uses "  + spellUsedName + "! (" + str(spellUsedDamages) + " damages)\n"
-                        boss.HP -= spellUsedDamages
-                        if not boss.is_dead():
-                            i = 0
-                            totalDamages = spellUsedDamages
-                            while (i < len(team.listChars) and not boss.is_dead()):
-                                dice = randint(1,6)
-                                spellUsedName = team.listChars[i].spellNames[dice - 1]
-                                spellUsedDamages = team.listChars[i].spellDamages[dice - 1]
-                                msg += "#" + team.listChars[i].name + " uses "  + spellUsedName + "! (" + str(spellUsedDamages) + " damages)\n"
-                                boss.HP -= spellUsedDamages
-                                totalDamages += spellUsedDamages
-                                i += 1
-
-                        msgFinal = self.getBossFightMessage(team, boss)
-                        message = await self.bot.edit_message(message, msgFinal + msg + "\n\n" + str(totalDamages) + " damages infliged```")
-                        await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=LONG_WAITING_TIME)
-                        if not boss.is_dead():
-                            msg = ""
-                            i = 1
-                            while (i < boss.AtkPerTurn and not team.has_lost()):
-                                dice = randint(1,6)
-                                if len(team.listChars) != 0:
-                                    target = team.listChars[randint(0, len(team.listChars) - 1)]
-                                else:
-                                    target = team.leader
-                                spellUsedName = boss.spellNames[dice - 1]
-                                spellUsedDamages = boss.spellDamages[dice - 1]
-                                msg += "#" + boss.name + " uses " + spellUsedName + " on " + target.name + "! (" + str(spellUsedDamages) + " damages)"
-                                target.HP -= spellUsedDamages
-                                if target.is_dead():
-                                    if target in team.listChars:
-                                        team.listChars.remove(target)
-                                    msg += " <-- DEAD"
-                                msg += "\n"
-                                i += 1
-
-                            msgFinal = self.getBossFightMessage(team, boss)
-                            message = await self.bot.edit_message(message, msgFinal + msg + "```")
-                            await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=LONG_WAITING_TIME)
-                    else:
-                        msg = ""
-                        i = 1
-                        while (i < boss.AtkPerTurn and not team.has_lost()):
-                            dice = randint(1,6)
-                            if len(team.listChars) != 0:
-                                target = team.listChars[randint(0, len(team.listChars) - 1)]
+                        data = FIGHT_BEGINNING_MESSAGE
+                        data += "#" + bosses.listBosses[0].name +" rolls the dice and gets a "  + str(dé2) + "!"
+                        data += "```"
+                        message = await self.bot.edit_message(message,data)
+                        await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=WAITING_TIME)
+                        if dé1!=dé2:
+                            if dé1 > dé2:
+                                first = team
+                                second = bosses
                             else:
-                                target = team.leader
-                            spellUsedName = boss.spellNames[dice - 1]
-                            spellUsedDamages = boss.spellDamages[dice - 1]
-                            msg += "#" + boss.name + " uses " + spellUsedName + " on " + target.name + "! (" + str(spellUsedDamages) + " damages)"
+                                first = bosses
+                                second = team
+                            check = True
+                            await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=WAITING_TIME)
+                    if type(first) == Team:
+                        await self.bot.edit_message(message, FIGHT_BEGINNING_MESSAGE + "#So it's " + first.leader.name + "'s team who will begin!```")
+                    else:
+                        await self.bot.edit_message(message, FIGHT_BEGINNING_MESSAGE + "#So it's " + first.listBosses[0].name + "'s team who will begin!```")
+                    await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=WAITING_TIME)
+                    while not team.has_lost() and not bosses.has_lost():
+                        
+
+                        if type(first) == Team:
+                            msg = ""
+                            dice = randint(1,6)
+                            spellUsedName = team.leader.spellNames[dice - 1]
+                            spellUsedDamages = team.leader.spellDamages[dice - 1]
+                            target = bosses.listBosses[randint(0, len(bosses.listBosses) - 1)]
+                            msg += "#" + team.leader.name + " uses "  + spellUsedName + " on " + target.name + "! (" + str(spellUsedDamages) + " damages)"
                             target.HP -= spellUsedDamages
                             if target.is_dead():
-                                if target in team.listChars:
-                                    team.listChars.remove(target)
+                                bosses.listBosses.remove(target)
                                 msg += " <-- DEAD"
                             msg += "\n"
-                            i += 1
+                            if not bosses.has_lost():
+                                i = 0
+                                totalDamages = spellUsedDamages
+                                while (i < len(team.listChars) and not bosses.has_lost()):
+                                    dice = randint(1,6)
+                                    spellUsedName = team.listChars[i].spellNames[dice - 1]
+                                    spellUsedDamages = team.listChars[i].spellDamages[dice - 1]
+                                    target = bosses.listBosses[randint(0, len(bosses.listBosses) - 1)]
+                                    msg += "#" + team.listChars[i].name + " uses "  + spellUsedName + " on " + target.name + "! (" + str(spellUsedDamages) + " damages)"
+                                    target.HP -= spellUsedDamages
+                                    totalDamages += spellUsedDamages
+                                    if target.is_dead():
+                                        bosses.listBosses.remove(target)
+                                        msg += " <-- DEAD"
+                                    msg += "\n"
+                                    i += 1
 
-                        msgFinal = self.getBossFightMessage(team, boss)
-                        message = await self.bot.edit_message(message, msgFinal + msg + "```")
-                        await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=LONG_WAITING_TIME)
-                        if not team.has_lost():
+                            msgFinal = self.getBossFightMessage(team, bosses)
+                            message = await self.bot.edit_message(message, msgFinal + msg + "\n\n" + str(totalDamages) + " damages infliged```")
+                            await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=LONG_WAITING_TIME)
+                            if not bosses.has_lost():
+                                msg = ""
+                                i = 1
+                                totalDamages = 0
+                                while (i < len(bosses.listBosses) + 1 and not team.has_lost()):
+                                    boss = bosses.listBosses[i - 1]
+                                    j = 1
+                                    while (j < boss.AtkPerTurn and not team.has_lost()):
+                                        dice = randint(1,6)
+                                        if len(team.listChars) != 0:
+                                            target = team.listChars[randint(0, len(team.listChars) - 1)]
+                                        else:
+                                            target = team.leader
+                                        spellUsedName = boss.spellNames[dice - 1]
+                                        spellUsedDamages = boss.spellDamages[dice - 1]
+                                        totalDamages += spellUsedDamages
+                                        msg += "#" + boss.name + " uses " + spellUsedName + " on " + target.name + "! (" + str(spellUsedDamages) + " damages)"
+                                        target.HP -= spellUsedDamages
+                                        if target.is_dead():
+                                            if target in team.listChars:
+                                                team.listChars.remove(target)
+                                            msg += " <-- DEAD"
+                                        msg += "\n"
+                                        j += 1
+                                    i += 1
+
+                                msgFinal = self.getBossFightMessage(team, bosses)
+                                message = await self.bot.edit_message(message, msgFinal + msg + "\n\n" + str(totalDamages) + " damages infliged```")
+                                await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=LONG_WAITING_TIME)
+                        else:
                             msg = ""
-                        dice = randint(1,6)
-                        spellUsedName = team.leader.spellNames[dice - 1]
-                        spellUsedDamages = team.leader.spellDamages[dice - 1]
-                        msg += "#" + team.leader.name + " uses "  + spellUsedName + "! (" + str(spellUsedDamages) + " damages)\n"
-                        boss.HP -= spellUsedDamages
-                        if not boss.is_dead():
-                            i = 0
-                            totalDamages = spellUsedDamages
-                            while (i < len(team.listChars) and not boss.is_dead()):
-                                dice = randint(1,6)
-                                spellUsedName = team.listChars[i].spellNames[dice - 1]
-                                spellUsedDamages = team.listChars[i].spellDamages[dice - 1]
-                                msg += "#" + team.listChars[i].name + " uses "  + spellUsedName + "! (" + str(spellUsedDamages) + " damages)\n"
-                                boss.HP -= spellUsedDamages
-                                totalDamages += spellUsedDamages
+                            i = 1
+                            totalDamages = 0
+                            while (i < len(bosses.listBosses) + 1 and not team.has_lost()):
+                                boss = bosses.listBosses[i - 1]
+                                j = 1
+                                while (j < boss.AtkPerTurn and not team.has_lost()):
+                                    dice = randint(1,6)
+                                    if len(team.listChars) != 0:
+                                        target = team.listChars[randint(0, len(team.listChars) - 1)]
+                                    else:
+                                        target = team.leader
+                                    spellUsedName = boss.spellNames[dice - 1]
+                                    spellUsedDamages = boss.spellDamages[dice - 1]
+                                    totalDamages += spellUsedDamages
+                                    msg += "#" + boss.name + " uses " + spellUsedName + " on " + target.name + "! (" + str(spellUsedDamages) + " damages)"
+                                    target.HP -= spellUsedDamages
+                                    if target.is_dead():
+                                        if target in team.listChars:
+                                            team.listChars.remove(target)
+                                        msg += " <-- DEAD"
+                                    msg += "\n"
+                                    j += 1
                                 i += 1
+                            msgFinal = self.getBossFightMessage(team, bosses)
+                            message = await self.bot.edit_message(message, msgFinal + msg + "\n\n" + str(totalDamages) + " damages infliged```")
+                            await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=LONG_WAITING_TIME)
+                            if not team.has_lost():
+                                msg = ""
+                                dice = randint(1,6)
+                                spellUsedName = team.leader.spellNames[dice - 1]
+                                spellUsedDamages = team.leader.spellDamages[dice - 1]
+                                target = bosses.listBosses[randint(0, len(bosses.listBosses) - 1)]
+                                msg += "#" + team.leader.name + " uses "  + spellUsedName + " on " + target.name + "! (" + str(spellUsedDamages) + " damages)"
+                                target.HP -= spellUsedDamages
+                                if target.is_dead():
+                                    bosses.listBosses.remove(target)
+                                    msg += " <-- DEAD"
+                                msg += "\n"
+                                if not bosses.has_lost():
+                                    i = 0
+                                    totalDamages = spellUsedDamages
+                                    while (i < len(team.listChars) and not bosses.has_lost()):
+                                        dice = randint(1,6)
+                                        spellUsedName = team.listChars[i].spellNames[dice - 1]
+                                        spellUsedDamages = team.listChars[i].spellDamages[dice - 1]
+                                        target = bosses.listBosses[randint(0, len(bosses.listBosses) - 1)]
+                                        msg += "#" + team.listChars[i].name + " uses "  + spellUsedName + " on " + target.name + "! (" + str(spellUsedDamages) + " damages)"
+                                        target.HP -= spellUsedDamages
+                                        totalDamages += spellUsedDamages
+                                        if target.is_dead():
+                                            bosses.listBosses.remove(target)
+                                            msg += " <-- DEAD"
+                                        msg += "\n"
+                                        i += 1
 
-                        msgFinal = self.getBossFightMessage(team, boss)
-                        message = await self.bot.edit_message(message, msgFinal + msg + "\n\n" + str(totalDamages) + " damages infliged```")
-                        await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=LONG_WAITING_TIME)
-                        
-                if boss.is_dead():
-                    await self.bot.edit_message(message, self.getBossFightResults(team, boss, True))
+                                msgFinal = self.getBossFightMessage(team, bosses)
+                                message = await self.bot.edit_message(message, msgFinal + msg + "\n\n" + str(totalDamages) + " damages infliged```")
+                                await self.bot.wait_for_message(content = MESSAGE_TO_WAIT, timeout=LONG_WAITING_TIME)
+                            
+                    if bosses.has_lost():
+                        await self.bot.edit_message(message, self.getBossFightResults(team, bosses, True))
+                    else:
+                        await self.bot.edit_message(message, self.getBossFightResults(team, bosses, False))
                 else:
-                    await self.bot.edit_message(message, self.getBossFightResults(team, boss, False))
+                    await self.bot.say("There is an incorrect boss name! :grimacing:")
             else:
-                await self.bot.say("This boss doesn't exist! :grimacing:")
-        else:
-            await self.bot.say(user.name + "#" + user.discriminator + " isn't the leader of any team! :grimacing:")
+                await self.bot.say(user.name + "#" + user.discriminator + " isn't the leader of any team! :grimacing:")
+        except Exception as e:
+            await self.bot.say(e)
 
     @commands.command(pass_context=True)
     async def fight(self,ctx,user : discord.Member = True):
