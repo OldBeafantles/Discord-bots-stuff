@@ -224,7 +224,7 @@ class War:
                     found = True
                     break
             if not found:
-                persos = "<@" + user.id + ">, please choose your character between the following ones:"
+                persos = "<@" + user.id + ">, please choose your character between the following ones:\n"
                 for x in range(0, len(self.list_persos)):
                     persos += str(x+1) + ") " + self.list_persos[x] + "\n"
                 message0 = await self.bot.say(persos)
@@ -753,7 +753,7 @@ class War:
                                 while (i < len(bosses.listBosses) + 1 and not team.has_lost()):
                                     boss = bosses.listBosses[i - 1]
                                     j = 1
-                                    while (j < boss.AtkPerTurn and not team.has_lost()):
+                                    while (j < boss.AtkPerTurn + 1 and not team.has_lost()):
                                         dice = randint(1,6)
                                         if len(team.listChars) != 0:
                                             target = team.listChars[randint(0, len(team.listChars) - 1)]
@@ -782,7 +782,7 @@ class War:
                             while (i < len(bosses.listBosses) + 1 and not team.has_lost()):
                                 boss = bosses.listBosses[i - 1]
                                 j = 1
-                                while (j < boss.AtkPerTurn and not team.has_lost()):
+                                while (j < boss.AtkPerTurn + 1 and not team.has_lost()):
                                     dice = randint(1,6)
                                     if len(team.listChars) != 0:
                                         target = team.listChars[randint(0, len(team.listChars) - 1)]
