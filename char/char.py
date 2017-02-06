@@ -101,7 +101,10 @@ class Char:
 
                 if answer.content == "<-" and len(listNum) > 30:
                     
-                    await self.bot.delete_message(answer)
+                    try:
+                        await self.bot.delete_message(answer)
+                    except Exception:
+                        pass
 
                     if page != 1:
 
@@ -112,7 +115,10 @@ class Char:
 
                 elif answer.content == "->" and len(listNum) > 30:
 
-                    await self.bot.delete_message(answer)
+                    try:
+                        await self.bot.delete_message(answer)
+                    except Exception:
+                        pass
 
                     if page != len(listNum) // 30 + 1:
 
@@ -124,10 +130,13 @@ class Char:
                 else:
 
                     await self.bot.delete_message(msgToDel)
+                    try:
+                        await self.bot.delete_message(answer)
+                    except Exception:
+                        pass
                     
                     try:
 
-                        await self.bot.delete_message(answer)
                         number = int(answer.content)
                         
                         if number > 0 and number < len(listNum) + 1:
