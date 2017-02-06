@@ -1,0 +1,42 @@
+{
+    "ENGLISH" :
+    {
+        "ERROR_NOT_A_SETTING_NAME" : "This isn't a correct setting name! :grimacing:",
+        "DATA_SAVED" : "Data saved! :wink:",
+        "ALREADY_INITIALIZED" : "This server is already initialized! :wink:",
+        "UNAVAILABLE_LANGUAGE" : "This language isn't available! :grimacing:",
+        "ALREADY_MOD_ADMIN_OWNER" : "This user is already a mod, an admin or the owner! :wink:",
+        "MOD_PROMOTION" : "Done! Congratulations for the promotion! :clap:",
+        "NOT_EVEN_A_MOD" : "This user wasn't even a mod! :grimacing:",
+        "MOD_DEMOTION" : "Done! This member was successfully removed from the mods list! :grimacing:",
+        "MAL_USER_NOT_FOUND" : "This MAL user doesn't exist! :grimacing:",
+        "LAST ONLINE" : "Last time online: ",
+        "JOINED" : "Joined at: ",
+        "FORUM POSTS" : " forum post(s)",
+        "REVIEWS" : " review(s)",
+        "RECOMMENDATIONS" : " recommendation(s)",
+        "BLOG POSTS" : " blog post(s)",
+        "CLUBS" : " club(s)"
+    },
+
+    "FRENCH" :
+    {
+        "ERROR_NOT_A_SETTING_NAME" : "Ce n'est pas un nom de paramètre correct ! :grimacing:",
+        "DATA_SAVED" : "Données sauvegardées ! :wink:",
+        "ALREADY_INITIALIZED" : "Ce serveur est déjà initialisé ! :wink:",
+        "UNAVAILABLE_LANGUAGE" : "Ce langage n'est pas disponible ! :grimacing:",
+        "ALREADY_MOD_ADMIN_OWNER" : "Ce member est déjà un modérateur, un administrateur ou le propriétaire du bot ! :wink:",
+        "MOD_PROMOTION" : "Fait ! Félicitations pour cette promotion ! :clap:",
+        "NOT_EVEN_A_MOD" : "Ce membre n'était même pas un modérateur ! :grimacing:",
+        "MOD_DEMOTION" : "Fait ! Ce membre a bien été supprimé de la liste des modérateurs ! :grimacing:",
+        "MAL_USER_NOT_FOUND" : "Cet utilisateur MAL n'existe pas ! :grimacing:",
+        "LAST ONLINE" : "Dernière connexion : ",
+        "JOINED" : "A rejoint le : ",
+        "FORUM POSTS" : " post(s) sur forum",
+        "REVIEWS" : " reviews(s)",
+        "RECOMMENDATIONS" : " recommendation(s)",
+        "BLOG POSTS" : " post(s) sur blog",
+        "CLUBS" : " club(s)"
+    }
+
+}
